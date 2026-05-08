@@ -1,0 +1,153 @@
+"use client"
+
+import { useState } from "react"
+import { toast } from "sonner"
+import { CheckIcon, CircleIcon } from "lucide-react"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { useAuth } from "@/features/auth/context/auth-context"
+
+function isValidEmail(value: string) {
+  const t = value.trim()
+  if (!t) return false
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t)
+}
+
+export function SignUpDialog({
+  open,
+  onOpenChange,
+  onSuccess,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onSuccess?: () => void
+}) {
+  const { signUp } = useAuth()
+  const [name, setName] = useState("")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+
+  const submit = async () => {
+    setError(null)
+    setIsLoading(true)
+    try {
+      await signUp({ name, email, password })
+      toast.success("Welcome to Daily Meal Decider! Your account is ready.")
+      onOpenChange(false)
+      onSuccess?.()
+      setPassword("")
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Sign up failed")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const emailOk = isValidEmail(email)
+  const passwordLengthOk = password.length >= 8
+  const createAccountDisabled =
+    isLoading ||
+    name.trim().length === 0 ||
+    !emailOk ||
+    !passwordLengthOk
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="bg-white border-[#E2D9CC] sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="font-serif text-[#1F3A2B]">Sign Up</DialogTitle>
+          <DialogDescription className="text-[#1F3A2B]/60">
+            Sign up to keep recipes handy & track your fridge
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-[#1F3A2B]">Name</label>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="User Name"
+              className="border-[#E2D9CC] bg-white"
+              type="text"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-[#1F3A2B]">Email</label>
+            <Input
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="user@example.com"
+              className="border-[#E2D9CC] bg-white"
+              type="email"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-[#1F3A2B]">Password</label>
+            <Input
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+              className="border-[#E2D9CC] bg-white"
+              type="password"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") submit()
+              }}
+            />
+            <ul className="mt-1.5 space-y-1" aria-live="polite">
+              <li className="flex items-center gap-2 text-sm">
+                {passwordLengthOk ? (
+                  <CheckIcon className="size-4 shrink-0 text-[#4F6B1F]" aria-hidden />
+                ) : (
+                  <CircleIcon className="size-4 shrink-0 text-[#1F3A2B]/35" aria-hidden />
+                )}
+                <span
+                  className={
+                    passwordLengthOk ? "text-[#4F6B1F]" : "text-[#1F3A2B]/60"
+                  }
+                >
+                  At least 8 characters
+                </span>
+              </li>
+            </ul>
+          </div>
+
+          {error && (
+            <div className="rounded-lg border border-[#F97316]/30 bg-[#FDE9DD] px-3 py-2 text-sm text-[#EA6A12]">
+              {error}
+            </div>
+          )}
+
+          <div className="space-y-2 pt-1">
+            <div className="flex items-center justify-end gap-2">
+              <Button
+                variant="outline"
+                className="border-[#E2D9CC] text-[#1F3A2B]"
+                onClick={() => onOpenChange(false)}
+                disabled={isLoading}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="bg-[#F97316] text-white hover:bg-[#F28C38]"
+                onClick={submit}
+                disabled={createAccountDisabled}
+              >
+                {isLoading ? "Creating..." : "Create Account"}
+              </Button>
+            </div>
+            {createAccountDisabled && !isLoading && (
+              <p className="text-right text-xs text-[#1F3A2B]/60">
+                Enter a valid email and password to continue.
+              </p>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+

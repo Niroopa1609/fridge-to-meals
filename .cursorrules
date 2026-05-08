@@ -1,0 +1,10 @@
+
+- Do not change layout
+- Do not change color scheme
+- Keep changes minimal and scoped
+- Do not rename APIs/files unless necessary
+- Keep layout responsive
+
+Security:
+- Do not expose secrets in frontend
+- Use env variables for API URLs
