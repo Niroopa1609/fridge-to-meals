@@ -10,7 +10,7 @@ export type UserPreferencesResponse = {
 
 export async function fetchUserPreferences(accessToken: string): Promise<UserPreferencesResponse> {
   const requestId = getRequestId()
-  const { res } = await apiFetch("/api/user/preferences", {
+  const { res } = await apiFetch("/api/preferences", {
     method: "GET",
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -29,7 +29,7 @@ export async function fetchUserPreferences(accessToken: string): Promise<UserPre
 
 export async function saveUserPreferences(accessToken: string, preferredCuisines: string[]): Promise<UserPreferencesResponse> {
   const requestId = getRequestId()
-  const { res } = await apiFetch("/api/user/preferences", {
+  const { res } = await apiFetch("/api/preferences", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -49,4 +49,3 @@ export async function saveUserPreferences(accessToken: string, preferredCuisines
     hasCompletedOnboarding: Boolean(data?.hasCompletedOnboarding),
   }
 }
-

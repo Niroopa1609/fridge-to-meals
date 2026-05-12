@@ -28,7 +28,7 @@ export async function addFridgeItems(
   items: { name: string; category: FridgeCategory }[]
 ): Promise<{ added: number }> {
   const requestId = getRequestId()
-  const { res } = await apiFetch("/api/fridge/items", {
+  const { res } = await apiFetch("/api/fridge", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -47,7 +47,7 @@ export async function addFridgeItems(
 
 export async function deleteFridgeItem(accessToken: string, itemId: string): Promise<void> {
   const requestId = getRequestId()
-  const { res } = await apiFetch(`/api/fridge/items/${encodeURIComponent(itemId)}`, {
+  const { res } = await apiFetch(`/api/fridge/${encodeURIComponent(itemId)}`, {
     method: "DELETE",
     headers: { Authorization: `Bearer ${accessToken}` },
     requestId,
@@ -64,7 +64,7 @@ export async function deleteFridgeItem(accessToken: string, itemId: string): Pro
 
 export async function deleteAllFridgeItems(accessToken: string): Promise<{ removed: number }> {
   const requestId = getRequestId()
-  const { res } = await apiFetch("/api/fridge/items", {
+  const { res } = await apiFetch("/api/fridge/remove-all", {
     method: "DELETE",
     headers: { Authorization: `Bearer ${accessToken}` },
     requestId,

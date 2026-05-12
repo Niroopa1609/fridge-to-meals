@@ -1,17 +1,24 @@
 import { getRequestId } from "@/lib/request-id"
 import { logError, logInfo } from "@/lib/logger"
 
-const API_BASE_URL = "http://localhost:8080"
-
 type ApiFetchOptions = Omit<RequestInit, "headers"> & {
   requestId?: string
   headers?: Record<string, string>
   safeLogFields?: Record<string, unknown>
 }
 
+function resolveUrl(path: string): string {
+  const p = path.startsWith("/") ? path : `/${path}`
+  if (typeof window !== "undefined") {
+    return p
+  }
+  const base = (process.env.APP_URL || "http://localhost:3000").replace(/\/$/, "")
+  return `${base}${p}`
+}
+
 export async function apiFetch(path: string, options: ApiFetchOptions = {}) {
   const requestId = options.requestId ?? getRequestId()
-  const url = `${API_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`
+  const url = resolveUrl(path)
 
   const headers: Record<string, string> = {
     ...(options.headers ?? {}),
@@ -24,8 +31,6 @@ export async function apiFetch(path: string, options: ApiFetchOptions = {}) {
     const res = await fetch(url, { ...options, headers })
     logInfo("api.request.end", requestId, { method: options.method ?? "GET", path, status: res.status })
 
-    // If the access token is stale/expired, prompt re-auth once.
-    // Avoid doing this for auth endpoints to prevent loops.
     if (
       typeof window !== "undefined" &&
       (res.status === 401 || res.status === 403) &&
@@ -45,4 +50,3 @@ export async function apiFetch(path: string, options: ApiFetchOptions = {}) {
     throw e
   }
 }
-

@@ -51,7 +51,7 @@ export type FavoriteDto = {
 
 export async function fetchFavorites(accessToken: string): Promise<FavoriteDto[]> {
   const requestId = getRequestId()
-  const { res } = await apiFetch("/api/favorites/fetchFavorites", {
+  const { res } = await apiFetch("/api/favorites", {
     method: "GET",
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -83,4 +83,3 @@ export async function deleteFavorite(id: string, accessToken: string): Promise<v
     throw new Error(body?.error || `Delete failed: ${res.status}`)
   }
 }
-

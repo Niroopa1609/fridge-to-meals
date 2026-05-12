@@ -20,12 +20,12 @@ export async function signUp(payload: SignUpPayload): Promise<SignInResponse> {
 
 export async function signIn(payload: SignInPayload): Promise<SignInResponse> {
   const requestId = getRequestId()
-  const { res } = await apiFetch("/api/auth/signin", {
+  const { res } = await apiFetch("/api/auth/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
     requestId,
-    safeLogFields: { action: "signin", email: payload.email },
+    safeLogFields: { action: "login", email: payload.email },
   })
   if (!res.ok) {
     const body = await res.json().catch(() => null)
@@ -33,4 +33,3 @@ export async function signIn(payload: SignInPayload): Promise<SignInResponse> {
   }
   return (await res.json()) as SignInResponse
 }
-

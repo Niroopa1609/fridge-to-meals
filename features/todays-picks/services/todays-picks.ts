@@ -9,12 +9,24 @@ export type TodayPicksResponse = {
 
 export async function fetchTodayPicks(accessToken: string, refresh: boolean): Promise<TodayPicksResponse> {
   const requestId = getRequestId()
-  const query = refresh ? "?refresh=true" : ""
-  const { res } = await apiFetch(`/api/recipes/today${query}`, {
+  if (refresh) {
+    const { res } = await apiFetch("/api/recipes/today/refresh", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}` },
+      requestId,
+      safeLogFields: { refresh: 1 },
+    })
+    if (!res.ok) {
+      const body = await res.json().catch(() => null)
+      throw new Error(body?.message || body?.error || `Fetch failed: ${res.status}`)
+    }
+    return (await res.json()) as TodayPicksResponse
+  }
+  const { res } = await apiFetch("/api/recipes/today", {
     method: "GET",
     headers: { Authorization: `Bearer ${accessToken}` },
     requestId,
-    safeLogFields: { refresh: refresh ? 1 : 0 },
+    safeLogFields: { refresh: 0 },
   })
   if (!res.ok) {
     const body = await res.json().catch(() => null)
@@ -22,4 +34,3 @@ export async function fetchTodayPicks(accessToken: string, refresh: boolean): Pr
   }
   return (await res.json()) as TodayPicksResponse
 }
-

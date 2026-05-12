@@ -17,7 +17,7 @@ const _playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: 'Daily Meal Decider - Busy life. Meals decided.',
+  title: 'Fridge To Meals - Busy life. Meals decided.',
   description: 'Generate delicious recipes based on the ingredients in your kitchen. Find meals that match your cuisine preferences, prep time, and cooking style.',
   generator: 'v0.app',
   icons: {
@@ -45,8 +45,8 @@ export default function RootLayout({
   children: ReactNode
 }>) {
   return (
-    <html lang="en" className="bg-[#F7F3EB]">
-      <body className="font-sans antialiased bg-[#F7F3EB]">
+    <html lang="en" className="bg-[#F7F3EB]" suppressHydrationWarning>
+      <body className="font-sans antialiased bg-[#F7F3EB]" suppressHydrationWarning>
         <AuthProvider>
           <RecipesStateProvider>
             <OnboardingGate />

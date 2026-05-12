@@ -15,32 +15,4 @@ function log(level: LogLevel, message: string, requestId: string, fields?: Recor
   } else {
     console.info(message, payload)
   }
-
-  // Frontend can't write files directly; send logs to backend for daily file logging.
-  void sendToBackend(level, message, payload)
 }
-
-async function sendToBackend(level: LogLevel, message: string, context: Record<string, unknown>) {
-  // Avoid SSR / build-time execution.
-  if (typeof window === "undefined") return
-
-  try {
-    await fetch("http://localhost:8080/api/logs/frontend", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Request-Id": String(context.requestId ?? ""),
-      },
-      body: JSON.stringify({
-        level: level.toUpperCase(),
-        message,
-        timestamp: new Date().toISOString(),
-        context,
-      }),
-      keepalive: true,
-    })
-  } catch {
-    // Never throw from logging.
-  }
-}
-
