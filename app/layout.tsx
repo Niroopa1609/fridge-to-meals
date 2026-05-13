@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import type { ReactNode } from "react"
 import { Geist, Geist_Mono, Playfair_Display } from 'next/font/google'
 import { Analytics } from "@vercel/analytics/react"
@@ -15,6 +15,11 @@ const _playfair = Playfair_Display({
   style: ['normal', 'italic'],
   weight: ['400', '500', '600', '700'],
 });
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+}
 
 export const metadata: Metadata = {
   title: 'Fridge To Meals - Busy life. Meals decided.',
@@ -45,8 +50,11 @@ export default function RootLayout({
   children: ReactNode
 }>) {
   return (
-    <html lang="en" className="bg-[#F7F3EB]" suppressHydrationWarning>
-      <body className="font-sans antialiased bg-[#F7F3EB]" suppressHydrationWarning>
+    <html lang="en" className="overflow-x-hidden bg-[#F7F3EB]" suppressHydrationWarning>
+      <body
+        className="min-h-dvh overflow-x-hidden bg-[#F7F3EB] font-sans antialiased"
+        suppressHydrationWarning
+      >
         <AuthProvider>
           <RecipesStateProvider>
             <OnboardingGate />

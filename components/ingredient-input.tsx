@@ -137,8 +137,8 @@ export function IngredientInput({
         }).slice(0, 8)
 
   return (
-    <div className="space-y-3">
-      <label className="flex items-baseline gap-2 text-sm font-medium text-[#1F3A2B]">
+    <div className="w-full max-w-full min-w-0 space-y-3">
+      <label className="flex max-w-full flex-wrap items-baseline gap-x-2 gap-y-1 text-sm font-medium text-[#1F3A2B]">
         <span>
           Ingredients <span className="text-[#F97316]">*</span>
         </span>
@@ -164,24 +164,24 @@ export function IngredientInput({
         </div>
       </div>
 
-      <div className="flex items-center">
-        <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#1F3A2B]/40" />
+      <div className="flex w-full max-w-full min-w-0 items-stretch gap-1.5 sm:gap-2">
+        <div className="relative min-w-0 flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 z-[1] h-4 w-4 -translate-y-1/2 text-[#1F3A2B]/40 sm:left-4 sm:h-5 sm:w-5" />
 
           <div
-            className="flex min-h-12 w-full flex-wrap items-center gap-2 rounded-lg border border-[#E2D9CC] bg-white py-2 pl-12 pr-[168px] text-sm text-[#1F3A2B] shadow-sm focus-within:border-[#F97316] focus-within:ring-1 focus-within:ring-[#F97316]"
+            className="flex min-h-11 w-full min-w-0 max-w-full flex-wrap items-center gap-1.5 rounded-lg border border-[#E2D9CC] bg-white py-1.5 pl-9 pr-2 text-sm text-[#1F3A2B] shadow-sm focus-within:border-[#F97316] focus-within:ring-1 focus-within:ring-[#F97316] sm:min-h-12 sm:gap-2 sm:py-2 sm:pl-12 sm:pr-3"
             onMouseDown={() => setIsSuggestOpen(true)}
           >
             {ingredients.map((ingredient) => (
               <span
                 key={ingredient}
-                className="inline-flex items-center gap-1 rounded-full bg-[#E4ECD4] px-2.5 py-1 text-xs font-semibold text-[#4F6B1F]"
+                className="inline-flex max-w-full min-w-0 shrink items-center gap-1 rounded-full bg-[#E4ECD4] px-2 py-0.5 text-xs font-semibold text-[#4F6B1F] sm:px-2.5 sm:py-1"
               >
-                {ingredient}
+                <span className="min-w-0 truncate">{ingredient}</span>
                 <button
                   type="button"
                   onClick={() => handleRemove(ingredient)}
-                  className="ml-0.5 rounded-full p-0.5 hover:bg-[#D7E4BE]"
+                  className="ml-0.5 shrink-0 rounded-full p-0.5 hover:bg-[#D7E4BE]"
                   aria-label={`Remove ${ingredient}`}
                 >
                   <X className="h-3 w-3" />
@@ -200,12 +200,12 @@ export function IngredientInput({
               onKeyDown={handleKeyDown}
               onFocus={() => setIsSuggestOpen(true)}
               onBlur={() => setTimeout(() => setIsSuggestOpen(false), 150)}
-              className="min-w-[140px] flex-1 bg-transparent text-sm text-[#1F3A2B] placeholder:text-[#1F3A2B]/40 outline-none"
+              className="min-w-0 flex-1 bg-transparent text-sm text-[#1F3A2B] placeholder:text-[#1F3A2B]/40 outline-none sm:min-w-[6rem]"
             />
           </div>
 
           {isSuggestOpen && filteredSuggestions.length > 0 && (
-            <div className="absolute left-0 right-0 top-[52px] z-10 overflow-hidden rounded-lg border border-[#E2D9CC] bg-white shadow-sm">
+            <div className="absolute left-0 right-0 top-full z-10 mt-1 max-w-full overflow-hidden rounded-lg border border-[#E2D9CC] bg-white shadow-sm">
               {filteredSuggestions.map((s) => (
                 <button
                   key={s}
@@ -216,42 +216,43 @@ export function IngredientInput({
                     setInputValue("")
                     setIsSuggestOpen(false)
                   }}
-                  className="flex w-full items-center justify-between px-4 py-2 text-left text-sm text-[#1F3A2B] hover:bg-[#F7F3EB]"
+                  className="flex w-full min-w-0 max-w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm text-[#1F3A2B] hover:bg-[#F7F3EB] sm:px-4"
                 >
-                  <span>{s}</span>
-                  <span className="text-xs font-medium text-[#4F6B1F]/70">Add</span>
+                  <span className="min-w-0 truncate">{s}</span>
+                  <span className="shrink-0 text-xs font-medium text-[#4F6B1F]/70">Add</span>
                 </button>
               ))}
             </div>
           )}
-          <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-2">
-            <button
-              type="button"
-              onClick={handleAddFromInput}
-              className="inline-flex h-9 items-center rounded-md bg-[#F97316] px-4 text-sm font-semibold text-white hover:bg-[#F28C38]"
-            >
-              <Plus className="mr-1.5 h-4 w-4" />
-              Add
-            </button>
-            <button
-              type="button"
-              onClick={handleMicClick}
-              disabled={voiceUi.isMicBusy}
-              aria-label={
-                voiceUi.phase === "web_listening" || voiceUi.phase === "media_recording"
-                  ? "Stop voice input"
-                  : "Voice input"
-              }
-              aria-pressed={voiceUi.phase === "web_listening" || voiceUi.phase === "media_recording"}
-              className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border bg-white text-[#1F3A2B]/70 hover:bg-[#E4ECD4] hover:text-[#1F3A2B] disabled:pointer-events-none disabled:opacity-50 ${
-                voiceUi.phase === "web_listening" || voiceUi.phase === "media_recording"
-                  ? "border-[#F97316] ring-1 ring-[#F97316]"
-                  : "border-[#E2D9CC]"
-              }`}
-            >
-              <Mic className="h-5 w-5" />
-            </button>
-          </div>
+        </div>
+
+        <div className="flex shrink-0 items-center gap-1 self-center sm:gap-2">
+          <button
+            type="button"
+            onClick={handleAddFromInput}
+            className="inline-flex h-9 shrink-0 items-center rounded-md bg-[#F97316] px-2 text-xs font-semibold text-white hover:bg-[#F28C38] sm:px-4 sm:text-sm"
+          >
+            <Plus className="mr-1 h-3.5 w-3.5 sm:mr-1.5 sm:h-4 sm:w-4" />
+            Add
+          </button>
+          <button
+            type="button"
+            onClick={handleMicClick}
+            disabled={voiceUi.isMicBusy}
+            aria-label={
+              voiceUi.phase === "web_listening" || voiceUi.phase === "media_recording"
+                ? "Stop voice input"
+                : "Voice input"
+            }
+            aria-pressed={voiceUi.phase === "web_listening" || voiceUi.phase === "media_recording"}
+            className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border bg-white text-[#1F3A2B]/70 hover:bg-[#E4ECD4] hover:text-[#1F3A2B] disabled:pointer-events-none disabled:opacity-50 ${
+              voiceUi.phase === "web_listening" || voiceUi.phase === "media_recording"
+                ? "border-[#F97316] ring-1 ring-[#F97316]"
+                : "border-[#E2D9CC]"
+            }`}
+          >
+            <Mic className="h-4 w-4 sm:h-5 sm:w-5" />
+          </button>
         </div>
       </div>
 

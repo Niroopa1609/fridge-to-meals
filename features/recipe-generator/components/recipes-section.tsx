@@ -28,7 +28,7 @@ export function RecipesSection({
     <div
       className={
         containerClassName ??
-        "mx-auto mt-6 max-w-[1360px] rounded-xl border border-[#E2D9CC] bg-white p-4 shadow-sm sm:p-6"
+        "mx-auto mt-6 w-full min-w-0 max-w-[1360px] rounded-xl border border-[#E2D9CC] bg-white p-4 shadow-sm sm:p-6"
       }
     >
       <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">

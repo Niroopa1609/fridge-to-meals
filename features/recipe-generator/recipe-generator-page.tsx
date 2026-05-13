@@ -89,7 +89,7 @@ export function RecipeGeneratorPage() {
     const expandedRecipe = recipes.find((r) => r.id === expandedRecipeId)
     if (expandedRecipe) {
       return (
-        <div className="min-h-screen bg-[#F7F3EB] pb-20">
+        <div className="min-h-screen w-full min-w-0 max-w-full overflow-x-hidden bg-[#F7F3EB] pb-24">
           <header
             className="sticky top-0 z-40 grid h-14 grid-cols-[1fr_auto_1fr] items-center px-4 text-white"
             style={{ background: "linear-gradient(to right, #3A4F16, #5C7A25)" }}
@@ -111,7 +111,7 @@ export function RecipeGeneratorPage() {
               <Menu className="h-6 w-6" />
             </button>
           </header>
-          <main className="p-4">
+          <main className="w-full min-w-0 max-w-full p-4">
             <RecipeCard
               recipe={expandedRecipe}
               isExpanded={true}
@@ -137,13 +137,13 @@ export function RecipeGeneratorPage() {
   }
 
   return (
-    <div className="relative min-h-screen bg-[#F7F3EB] pb-20">
+    <div className="relative min-h-screen w-full min-w-0 max-w-full overflow-x-hidden bg-[#F7F3EB] pb-24">
       <DecorativeLeaves />
       <Header />
 
-      <main className="mx-auto max-w-[1440px] px-8 py-6 sm:py-8 lg:px-12 xl:px-16">
+      <main className="mx-auto w-full min-w-0 max-w-[1440px] px-4 py-6 sm:px-8 sm:py-8 lg:px-12 xl:px-16">
         <div className="mb-6 text-center sm:mb-8">
-          <h2 className="font-serif text-xl font-semibold text-[#1F3A2B] sm:text-2xl md:text-[26px]">
+          <h2 className="font-serif text-lg font-semibold text-[#1F3A2B] sm:text-2xl md:text-[26px]">
             {"What's in your Fridge today?"}
           </h2>
           <div className="mt-3 flex items-center justify-center gap-1">
@@ -162,7 +162,7 @@ export function RecipeGeneratorPage() {
           </div>
         </div>
 
-        <div className="mx-auto max-w-[1080px] space-y-5">
+        <div className="mx-auto w-full min-w-0 max-w-[1080px] space-y-5">
           <IngredientInput
             ingredients={formState.ingredients}
             onIngredientsChange={setIngredients}
@@ -180,7 +180,7 @@ export function RecipeGeneratorPage() {
 
           <MealTypeSelector selectedTypes={formState.mealTypeIds} onSelectedTypesChange={setMealTypeIds} />
 
-          <div className="flex justify-center pt-2">
+          <div className="flex w-full min-w-0 max-w-full justify-center pt-2">
             <Button
               onClick={() => {
                 setExpandedRecipeId(null)
@@ -188,7 +188,7 @@ export function RecipeGeneratorPage() {
                 generate()
               }}
               disabled={!canGenerate}
-              className="h-11 w-full rounded-md bg-[#F97316] text-lg font-semibold text-white hover:bg-[#F28C38] disabled:opacity-50 disabled:pointer-events-none sm:w-[360px]"
+              className="h-11 w-full max-w-full min-w-0 rounded-md bg-[#F97316] text-base font-semibold text-white hover:bg-[#F28C38] disabled:pointer-events-none disabled:opacity-50 sm:w-[360px] sm:max-w-[360px] sm:text-lg"
             >
               <Sparkles className="mr-2 h-5 w-5" />
               {isLoading ? "Generating..." : "Generate Recipes"}

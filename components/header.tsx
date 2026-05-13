@@ -35,9 +35,9 @@ export function Header() {
       className="w-full"
       style={{ background: 'linear-gradient(to right, #3A4F16, #5C7A25)' }}
     >
-      <div className="mx-auto grid h-[70px] max-w-[1400px] grid-cols-[1fr_auto_1fr] items-center px-4 md:h-[90px] lg:px-8">
+      <div className="mx-auto grid h-[70px] max-w-[1400px] w-full min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-3 sm:px-4 md:h-[90px] lg:px-8">
         {/* Left - Logo and tagline */}
-        <div className="flex items-center gap-2 md:gap-3">
+        <div className="flex min-w-0 shrink-0 items-center gap-2 md:gap-3">
           <button
             type="button"
             onClick={() => router.push("/")}
@@ -53,14 +53,14 @@ export function Header() {
         </div>
 
         {/* Center - Title */}
-        <h1 className="font-serif text-xl font-semibold tracking-wide text-white md:text-4xl lg:text-[44px]">
-          <Link href="/" className="inline-block">
+        <h1 className="min-w-0 truncate text-center font-serif text-base font-semibold tracking-wide text-white sm:text-xl md:text-4xl lg:text-[44px]">
+          <Link href="/" className="inline-block max-w-full truncate px-0.5">
             Fridge To Meals
           </Link>
         </h1>
 
         {/* Right - Auth buttons (desktop) / Menu (mobile) */}
-        <div className="flex items-center justify-end gap-3">
+        <div className="flex min-w-0 shrink-0 items-center justify-end gap-2 sm:gap-3">
           <div className="hidden items-center gap-3 md:flex">
             {isHydrated && user ? (
               <div className="flex flex-col items-center">

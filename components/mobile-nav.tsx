@@ -21,11 +21,13 @@ export function MobileNav({ activeTab, onTabChange }: MobileNavProps) {
   ]
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#E2D9CC] bg-white">
-      <div className="flex h-16 items-center justify-around">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 w-full max-w-full min-w-0 border-t border-[#E2D9CC] bg-white">
+      <div className="flex h-16 w-full min-w-0 items-stretch">
         {tabs.map((tab) => (
           <button
             key={tab.id}
+            type="button"
+            title={tab.label}
             data-footer-favorites={tab.id === "favorites" ? "true" : undefined}
             onClick={() => {
               if (tab.id === "planner") {
@@ -40,21 +42,23 @@ export function MobileNav({ activeTab, onTabChange }: MobileNavProps) {
             }}
             disabled={false}
             className={cn(
-              "flex flex-col items-center gap-1 px-5 py-2 text-xs transition-colors",
-              tab.isPrimary && "px-6",
+              "flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-0.5 py-1.5 text-center transition-colors",
+              "text-[10px] font-medium leading-tight sm:gap-1 sm:px-1 sm:text-xs",
               tab.id !== "planner" && !isAuthed && "opacity-55 text-[#1F3A2B]/45",
               activeTab === tab.id ? "text-[#F97316]" : "text-[#1F3A2B]/60 hover:text-[#1F3A2B]"
             )}
           >
             <tab.icon
               className={cn(
-                "h-5 w-5",
-                tab.isPrimary && "h-6 w-6",
+                "h-4 w-4 shrink-0 sm:h-5 sm:w-5",
+                tab.isPrimary && "sm:h-6 sm:w-6",
                 activeTab === tab.id && "text-[#F97316] fill-[#F97316]/20",
                 tab.id !== "planner" && !isAuthed && "text-[#1F3A2B]/45"
               )}
             />
-            <span className="font-medium">{tab.label}</span>
+            <span className="line-clamp-2 w-full min-w-0 max-w-full break-words px-0.5">
+              {tab.label}
+            </span>
           </button>
         ))}
       </div>
