@@ -46,7 +46,28 @@ export async function apiFetch(path: string, options: ApiFetchOptions = {}) {
 
     return { res, requestId }
   } catch (e) {
-    logError("api.request.error", requestId, { method: options.method ?? "GET", path })
+    const errName = e instanceof Error ? e.name : "Unknown"
+    const errMessage = e instanceof Error ? e.message : String(e)
+    const isTransientNetwork =
+      errName === "TypeError" &&
+      (errMessage === "Failed to fetch" ||
+        errMessage.includes("NetworkError") ||
+        errMessage.includes("Load failed"))
+    if (isTransientNetwork) {
+      logInfo("api.request.network_error", requestId, {
+        method: options.method ?? "GET",
+        path,
+        errorName: errName,
+        errorMessage: errMessage,
+      })
+    } else {
+      logError("api.request.error", requestId, {
+        method: options.method ?? "GET",
+        path,
+        errorName: errName,
+        errorMessage: errMessage,
+      })
+    }
     throw e
   }
 }

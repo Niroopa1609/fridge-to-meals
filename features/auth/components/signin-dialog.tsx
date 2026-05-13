@@ -10,10 +10,13 @@ export function SignInDialog({
   open,
   onOpenChange,
   onSuccess,
+  preface,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSuccess?: () => void
+  /** Optional short message shown above the default description (e.g. why sign-in was prompted). */
+  preface?: string | null
 }) {
   const { signIn } = useAuth()
   const [email, setEmail] = useState("")
@@ -41,6 +44,11 @@ export function SignInDialog({
       <DialogContent className="bg-white border-[#E2D9CC] sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="font-serif text-[#1F3A2B]">Sign In</DialogTitle>
+          {preface ? (
+            <p className="text-sm font-medium text-[#1F3A2B]" role="note">
+              {preface}
+            </p>
+          ) : null}
           <DialogDescription className="text-[#1F3A2B]/60">
             Sign in to save recipes, track your fridge, and get daily meal picks.
           </DialogDescription>

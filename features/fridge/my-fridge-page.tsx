@@ -478,10 +478,10 @@ export function MyFridgePage() {
             </p>
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-2 lg:gap-8">
+          <div className="grid gap-6 lg:grid-cols-2 lg:items-stretch lg:gap-8">
             {/* Upload panel */}
-            <section className="rounded-2xl border border-[#E2D9CC] bg-white p-5 shadow-sm sm:p-6">
-              <div className="mb-4 flex items-start gap-2">
+            <section className="flex h-full min-h-0 flex-col rounded-2xl border border-[#E2D9CC] bg-white p-5 shadow-sm sm:p-6">
+              <div className="mb-4 shrink-0 flex items-start gap-2">
                 <Camera className="mt-0.5 h-5 w-5 shrink-0 text-[#F97316]" aria-hidden />
                 <div>
                   <h2 className="font-serif text-lg font-semibold text-[#1F3A2B]">Upload Grocery or Fridge Image</h2>
@@ -491,6 +491,7 @@ export function MyFridgePage() {
                 </div>
               </div>
 
+              <div className="flex min-h-0 flex-1 flex-col">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -548,33 +549,27 @@ export function MyFridgePage() {
               <p className="mt-3 text-center text-xs font-medium text-[#1F3A2B]/60">
                 {selectedImages.length} / {MAX_UPLOAD_IMAGES} image{selectedImages.length === 1 ? "" : "s"} selected
               </p>
+              </div>
 
               <Button
                 type="button"
-                className="mt-4 w-full bg-[#4F6B1F] font-semibold text-white hover:bg-[#3d5518] disabled:opacity-50"
+                className="mt-4 w-full shrink-0 bg-[#4F6B1F] font-semibold text-white hover:bg-[#3d5518] disabled:opacity-50 lg:mt-auto lg:pt-2"
                 disabled={selectedImages.length === 0 || isDetecting}
                 onClick={() => void handleDetectIngredients()}
               >
                 <Sparkles className="mr-2 h-4 w-4" />
                 {isDetecting ? "Detecting ingredients…" : "Detect Ingredients"}
               </Button>
-
-              <div className="mt-4 flex gap-2 rounded-xl border border-[#E8DFD0] bg-[#FBF8F2] p-3 text-xs leading-relaxed text-[#1F3A2B]/75 sm:text-sm">
-                <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-[#F97316]" aria-hidden />
-                <p>
-                Run detection to fill the list on the right, remove any unwanted items, then tap Save to My Fridge below..
-                </p>
-              </div>
             </section>
 
             {/* Detected */}
-            <section className="rounded-2xl border border-[#E2D9CC] bg-white p-5 shadow-sm sm:p-6">
-              <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
+            <section className="flex h-full min-h-0 flex-col rounded-2xl border border-[#E2D9CC] bg-white p-5 shadow-sm sm:p-6">
+              <div className="mb-4 shrink-0 flex flex-wrap items-start justify-between gap-2">
                 <div className="flex items-start gap-2">
                   <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-[#4F6B1F]" aria-hidden />
                   <div>
                     <h2 className="font-serif text-lg font-semibold text-[#1F3A2B]">Detected Ingredients</h2>
-                    <p className="text-xs text-[#1F3A2B]/65 sm:text-sm">Review the ingredients detected from your images.</p>
+                    <p className="text-xs text-[#1F3A2B]/65 sm:text-sm">Review the ingredients detected from your images before saving.</p>
                   </div>
                 </div>
                 <span className="shrink-0 rounded-full border border-[#E2D9CC] bg-[#F7F3EB] px-3 py-1 text-xs font-semibold text-[#1F3A2B]">
@@ -582,13 +577,14 @@ export function MyFridgePage() {
                 </span>
               </div>
 
+              <div className="flex min-h-0 flex-1 flex-col">
               {detectionError ? (
                 <p className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{detectionError}</p>
               ) : null}
 
               {detectedIngredients.length === 0 ? (
                 <p className="rounded-xl border border-dashed border-[#E2D9CC] bg-[#F7F3EB]/50 py-10 text-center text-sm text-[#1F3A2B]/60">
-                  Upload an image to detect ingredients.
+                  Upload an image to detect ingredients automatically/ add items manually.
                 </p>
               ) : (
                 <div className="flex flex-wrap gap-2 rounded-xl border border-[#E2D9CC] bg-[#FBF8F2] p-3">
@@ -615,6 +611,7 @@ export function MyFridgePage() {
                   ))}
                 </div>
               )}
+              </div>
 
               <Button
                 type="button"
@@ -623,7 +620,7 @@ export function MyFridgePage() {
                   resetManualDialog()
                   setManualOpen(true)
                 }}
-                className="mt-4 w-full border-[#F97316] bg-transparent font-semibold text-[#F97316] hover:bg-[#FFF4EC]"
+                className="mt-4 w-full shrink-0 border-[#F97316] bg-transparent font-semibold text-[#F97316] hover:bg-[#FFF4EC] lg:mt-auto lg:pt-2"
               >
                 <Plus className="mr-2 h-4 w-4" />
                 Add Item Manually
@@ -631,8 +628,24 @@ export function MyFridgePage() {
             </section>
           </div>
 
+          <div className="flex flex-col items-center gap-2">
+            <Button
+              type="button"
+              disabled={saving || saveableCount === 0}
+              onClick={() => void handleSave()}
+              className="h-12 w-full max-w-md rounded-md bg-[#F97316] text-base font-semibold text-white shadow-sm hover:bg-[#F28C38] disabled:opacity-50"
+            >
+              <Refrigerator className="mr-2 h-5 w-5" />
+              {saving ? "Saving…" : "Save to My Fridge"}
+            </Button>
+            <p className="flex max-w-md items-center justify-center gap-1.5 text-center text-xs text-[#1F3A2B]/55">
+              <Lock className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              Your fridge is private and only visible to you.
+            </p>
+          </div>
+
           {/* Summary */}
-          <section id="fridge-summary" className="rounded-2xl border border-[#E2D9CC] bg-white p-5 shadow-sm sm:p-6">
+          <section id="fridge-summary" className="rounded-2xl border border-[#E2D9CC] bg-white p-5 pb-8 shadow-sm sm:p-6 sm:pb-10">
             <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
               <div className="flex items-start gap-2">
                 <Refrigerator className="mt-0.5 h-5 w-5 shrink-0 text-[#4F6B1F]" aria-hidden />
@@ -794,25 +807,11 @@ export function MyFridgePage() {
             </AlertDialog>
 
             {savedItems.length === 0 && isHydrated && user ? (
-              <p className="mt-3 text-sm text-[#1F3A2B]/60">No saved ingredients yet. Save from detected items above.</p>
+              <p className="mt-3 text-sm text-[#1F3A2B]/60">
+                No saved ingredients yet. Detect ingredients, then use Save to My Fridge.
+              </p>
             ) : null}
           </section>
-
-          <div className="flex flex-col items-center gap-2 pb-4">
-            <Button
-              type="button"
-              disabled={saving || saveableCount === 0}
-              onClick={() => void handleSave()}
-              className="h-12 w-full max-w-md rounded-md bg-[#F97316] text-base font-semibold text-white shadow-sm hover:bg-[#F28C38] disabled:opacity-50"
-            >
-              <Refrigerator className="mr-2 h-5 w-5" />
-              {saving ? "Saving…" : "Save to My Fridge"}
-            </Button>
-            <p className="flex items-center gap-1.5 text-center text-xs text-[#1F3A2B]/55">
-              <Lock className="h-3.5 w-3.5 shrink-0" aria-hidden />
-              Your fridge is private and only visible to you.
-            </p>
-          </div>
         </div>
       </main>
 

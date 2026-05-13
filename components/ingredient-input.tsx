@@ -1,8 +1,17 @@
 "use client"
 
-import { useCallback, useState } from "react"
-import { Search, Plus, Mic, X } from "lucide-react"
+import { useCallback, useMemo, useState } from "react"
+import { Search, Mic, X } from "lucide-react"
 import { useIngredientVoiceInput } from "@/hooks/use-ingredient-voice-input"
+import { useAuth } from "@/features/auth/context/auth-context"
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
 
 interface IngredientInputProps {
   ingredients: string[]
@@ -25,6 +34,26 @@ const QUICK_PICKS = [
 
 function normalizeIngredientKey(value: string): string {
   return value.trim().toLowerCase()
+}
+
+function FridgeLineIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
+    >
+      <rect x="5" y="3" width="14" height="18" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M5 9h14" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M9 5.5V7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="9" cy="12" r="0.75" fill="currentColor" />
+      <circle cx="9" cy="15.5" r="0.75" fill="currentColor" />
+    </svg>
+  )
 }
 
 const SUGGESTED_INGREDIENTS = [
@@ -55,28 +84,25 @@ export function IngredientInput({
   onIngredientsChange,
   fridgeQuickPicks,
 }: IngredientInputProps) {
+  const { user, isHydrated } = useAuth()
   const [inputValue, setInputValue] = useState("")
   const [isSuggestOpen, setIsSuggestOpen] = useState(false)
+  const [fridgeDialogOpen, setFridgeDialogOpen] = useState(false)
+  const [fridgeModalSelected, setFridgeModalSelected] = useState<Set<string>>(new Set())
 
-  const quickPickChips = (() => {
-    const fridge = (fridgeQuickPicks ?? []).map((s) => s.trim()).filter(Boolean)
-    if (fridge.length === 0) return QUICK_PICKS
+  const fridgeItemsDeduped = useMemo(() => {
     const seen = new Set<string>()
-    const merged: string[] = []
-    for (const s of fridge) {
+    const out: string[] = []
+    for (const raw of fridgeQuickPicks ?? []) {
+      const s = raw.trim()
+      if (!s) continue
       const k = normalizeIngredientKey(s)
       if (seen.has(k)) continue
       seen.add(k)
-      merged.push(s)
+      out.push(s)
     }
-    for (const s of QUICK_PICKS) {
-      const k = normalizeIngredientKey(s)
-      if (seen.has(k)) continue
-      seen.add(k)
-      merged.push(s)
-    }
-    return merged
-  })()
+    return out
+  }, [fridgeQuickPicks])
 
   const addIngredients = useCallback(
     (values: string[]) => {
@@ -127,6 +153,41 @@ export function IngredientInput({
     }
   }
 
+  const toggleFridgeModalChip = (item: string) => {
+    setFridgeModalSelected((prev) => {
+      const next = new Set(prev)
+      const key = normalizeIngredientKey(item)
+      const hit = [...next].find((x) => normalizeIngredientKey(x) === key)
+      if (hit !== undefined) next.delete(hit)
+      else next.add(item)
+      return next
+    })
+  }
+
+  const handleFridgeDialogOpenChange = (open: boolean) => {
+    setFridgeDialogOpen(open)
+    if (open) setFridgeModalSelected(new Set())
+  }
+
+  const handleFridgeAddButtonClick = () => {
+    if (!isHydrated) return
+    if (!user) {
+      window.dispatchEvent(
+        new CustomEvent("auth:signin", {
+          detail: { message: "Sign in to use ingredients from your fridge." },
+        })
+      )
+      return
+    }
+    handleFridgeDialogOpenChange(true)
+  }
+
+  const handleAddSelectedFromFridge = () => {
+    addIngredients([...fridgeModalSelected])
+    setFridgeDialogOpen(false)
+    setFridgeModalSelected(new Set())
+  }
+
   const filteredSuggestions =
     inputValue.trim().length === 0
       ? []
@@ -147,7 +208,7 @@ export function IngredientInput({
 
       <div className="space-y-2">
         <div className="flex flex-wrap gap-2">
-          {quickPickChips.map((pick) => (
+          {QUICK_PICKS.map((pick) => (
             <button
               key={pick}
               type="button"
@@ -164,8 +225,8 @@ export function IngredientInput({
         </div>
       </div>
 
-      <div className="flex w-full max-w-full min-w-0 items-stretch gap-1.5 sm:gap-2">
-        <div className="relative min-w-0 flex-1">
+      <div className="flex w-full max-w-full min-w-0 flex-col gap-2 sm:flex-row sm:items-stretch sm:gap-2">
+        <div className="relative min-w-0 w-full sm:flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 z-[1] h-4 w-4 -translate-y-1/2 text-[#1F3A2B]/40 sm:left-4 sm:h-5 sm:w-5" />
 
           <div
@@ -226,14 +287,18 @@ export function IngredientInput({
           )}
         </div>
 
-        <div className="flex shrink-0 items-center gap-1 self-center sm:gap-2">
+        <div className="flex w-full max-w-full shrink-0 items-center justify-center gap-2 sm:w-auto sm:justify-start sm:self-center sm:gap-2">
           <button
             type="button"
-            onClick={handleAddFromInput}
-            className="inline-flex h-9 shrink-0 items-center rounded-md bg-[#F97316] px-2 text-xs font-semibold text-white hover:bg-[#F28C38] sm:px-4 sm:text-sm"
+            onClick={handleFridgeAddButtonClick}
+            aria-label="Add from your fridge"
+            className="inline-flex h-9 min-h-9 shrink-0 items-center justify-center gap-1 rounded-md bg-[#F97316] px-2 py-0 text-[11px] font-semibold leading-tight text-white shadow-sm hover:bg-[#F28C38] max-[360px]:gap-0.5 max-[360px]:px-1.5 max-[360px]:text-[10px] sm:gap-1.5 sm:px-3 sm:text-sm sm:leading-none"
           >
-            <Plus className="mr-1 h-3.5 w-3.5 sm:mr-1.5 sm:h-4 sm:w-4" />
-            Add
+            <FridgeLineIcon className="h-3.5 w-3.5 shrink-0 text-white sm:h-4 sm:w-4" />
+            <span className="min-w-0 text-left">
+              <span className="inline max-[360px]:hidden sm:inline">Add from your fridge</span>
+              <span className="hidden max-[360px]:inline sm:hidden">From fridge</span>
+            </span>
           </button>
           <button
             type="button"
@@ -255,6 +320,66 @@ export function IngredientInput({
           </button>
         </div>
       </div>
+
+      <Dialog open={fridgeDialogOpen} onOpenChange={handleFridgeDialogOpenChange}>
+        <DialogContent
+          showCloseButton
+          className="flex max-h-[90dvh] w-[min(100%,22rem)] max-w-[calc(100vw-1.5rem)] flex-col gap-0 overflow-hidden border-[#E2D9CC] bg-[#FDFCF8] p-0 sm:max-w-md"
+        >
+          <DialogHeader className="shrink-0 border-b border-[#E2D9CC] px-4 py-3 text-left sm:px-5 sm:py-4">
+            <DialogTitle className="font-serif text-base font-semibold text-[#1F3A2B] sm:text-lg">
+              Choose from your fridge
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="min-w-0 max-h-[min(52dvh,15.5rem)] overflow-y-auto overflow-x-hidden px-4 py-3 sm:max-h-[min(45vh,17rem)] sm:px-5 sm:py-4">
+            {fridgeItemsDeduped.length === 0 ? (
+              <p className="text-sm text-[#1F3A2B]/65">No items in your fridge yet. Add items from My Fridge.</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {fridgeItemsDeduped.map((item) => {
+                  const selected = [...fridgeModalSelected].some(
+                    (x) => normalizeIngredientKey(x) === normalizeIngredientKey(item)
+                  )
+                  return (
+                    <button
+                      key={item}
+                      type="button"
+                      onClick={() => toggleFridgeModalChip(item)}
+                      className={
+                        selected
+                          ? "rounded-full border-2 border-[#F97316] bg-[#FDE9DD] px-3 py-1.5 text-xs font-semibold text-[#EA6A12] shadow-sm"
+                          : "rounded-full border border-[#E2D9CC] bg-white px-3 py-1.5 text-xs font-semibold text-[#4F6B1F] hover:border-[#F97316]/50"
+                      }
+                    >
+                      {item}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="shrink-0 gap-2 border-t border-[#E2D9CC] bg-[#F7F3EB]/80 px-4 py-3 sm:flex-row sm:justify-end sm:px-5 sm:py-3">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full border-[#E2D9CC] bg-white text-[#1F3A2B] hover:bg-[#F7F3EB] sm:w-auto"
+              onClick={() => handleFridgeDialogOpenChange(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              className="w-full bg-[#F97316] text-white hover:bg-[#F28C38] sm:w-auto"
+              disabled={fridgeModalSelected.size === 0 || fridgeItemsDeduped.length === 0}
+              onClick={handleAddSelectedFromFridge}
+            >
+              Add Selected
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {(voiceUi.statusMessage || voiceUi.errorMessage) && (
         <p

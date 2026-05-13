@@ -10,7 +10,7 @@ Each recipe's mealType MUST be one of the provided meal types.
 User input:
 Ingredients: ${JSON.stringify(request.ingredients)}
 Cuisine: ${request.cuisine}
-Meal prep time: ${request.mealPrepTime}
+Prep time: ${request.mealPrepTime}
 Meal types: ${JSON.stringify(request.mealTypes)}
 Cooking style: ${request.cookingStyle}
 

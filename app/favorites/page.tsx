@@ -3,10 +3,11 @@
 import { useEffect, useMemo, useState } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { Heart, Leaf, Minus, Search, Clock, Trash2, Users } from "lucide-react"
+import { Heart, Leaf, Minus, Search, Clock, Trash2, Users, ChevronDown } from "lucide-react"
 import { toast } from "sonner"
 import { Header } from "@/components/header"
 import { MobileNav } from "@/components/mobile-nav"
+import { RecipeDetailMobileView } from "@/components/recipe-detail-mobile-view"
 import { DecorativeLeaves } from "@/features/recipe-generator/components/decorative-leaves"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
@@ -14,8 +15,8 @@ import { useIsMobile } from "@/components/ui/use-mobile"
 import { useAuth } from "@/features/auth/context/auth-context"
 import { deleteFavorite, fetchFavorites, type FavoriteDto } from "@/features/favorites/services/favorites"
 import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog"
-import { Drawer, DrawerContent } from "@/components/ui/drawer"
 import { RecipeShare } from "@/features/recipe-generator/components/recipe-share"
+import { favoriteDtoToRecipe } from "@/features/favorites/utils/favorite-to-recipe"
 
 type MealFilter =
   | "All"
@@ -124,49 +125,121 @@ function FavoriteRow({
 }) {
   const imageUrl = favorite.imageUrl || "/placeholder.svg"
   const mealType = normalizeMealType(favorite.mealType)
+  const diffLabel = (favorite.difficulty ?? "—").toString().trim().toUpperCase()
 
   return (
     <button
       type="button"
       onClick={onOpen}
-      className="flex w-full items-center gap-3 rounded-xl border border-[#E2D9CC] bg-white p-3 text-left shadow-sm"
+      className="flex w-full items-start gap-3 rounded-xl border border-[#E2D9CC] bg-white p-3.5 text-left shadow-sm"
     >
-      <div className="relative h-[72px] w-[92px] shrink-0 overflow-hidden rounded-lg bg-[#E4ECD4]/20">
-        <Image src={imageUrl} alt={favorite.title} fill className="object-cover" />
+      <div className="relative h-[88px] w-[112px] max-[480px]:w-[104px] shrink-0 overflow-hidden rounded-md bg-[#E4ECD4]/20">
+        <Image src={imageUrl} alt={favorite.title} fill className="object-cover" sizes="120px" />
       </div>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h3 className="truncate font-serif text-[15px] font-semibold text-[#1F3A2B]">{favorite.title}</h3>
-            <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-[#1F3A2B]/70">
-              <span className="inline-flex items-center gap-1">
-                <Clock className="h-3.5 w-3.5" />
-                {favorite.prepTime || "—"}
-              </span>
-              <span className="h-1 w-1 rounded-full bg-[#1F3A2B]/30" />
-              <span className="font-semibold text-[#EA6A12]">{favorite.difficulty || "—"}</span>
-              <span className="h-1 w-1 rounded-full bg-[#1F3A2B]/30" />
-              <span className="rounded bg-[#E4ECD4] px-1.5 py-0.5 font-semibold uppercase text-[#4F6B1F]">{mealType}</span>
-            </div>
-            <p className="mt-1 line-clamp-1 text-[11px] text-[#1F3A2B]/65">{favorite.mainIngredients || ""}</p>
-          </div>
-          <div className="flex items-start gap-2">
-            <Heart className="mt-1 h-5 w-5 fill-[#F97316] text-[#F97316]" />
+      <div className="flex min-w-0 flex-1 flex-col text-left">
+        <h3 className="line-clamp-2 font-serif text-[15px] font-semibold leading-snug text-[#1F3A2B]">
+          {favorite.title}
+        </h3>
+        <div className="mt-1.5 flex min-w-0 items-center text-xs">
+          <span className="flex shrink-0 items-center gap-1 text-[#1F3A2B]/70">
+            <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            <span className="min-w-0">{favorite.prepTime || "—"}</span>
+          </span>
+          <span className="mx-2 h-3 w-px shrink-0 bg-[#1F3A2B]/25" aria-hidden />
+          <span className="shrink-0 text-xs font-bold uppercase tracking-wide text-[#EA6A12]">{diffLabel}</span>
+          <span className="min-w-0 flex-1" aria-hidden />
+        </div>
+        <div className="mt-1.5 flex min-w-0 items-center justify-between gap-2">
+          <span className="inline-flex min-w-0 shrink rounded-full bg-[#E4ECD4] px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[#4F6B1F]">
+            {mealType.toUpperCase()}
+          </span>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <span
+              className="pointer-events-none inline-flex h-8 w-8 items-center justify-center"
+              aria-hidden
+            >
+              <Heart className="h-5 w-5 fill-[#F97316] text-[#F97316]" />
+            </span>
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation()
                 onRemove()
               }}
-              className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#E2D9CC] bg-white hover:bg-[#F7F3EB]"
+              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-[#E2D9CC] bg-white hover:bg-[#F7F3EB]"
               aria-label="Remove from Favorites"
             >
-              <Trash2 className="h-4 w-4 text-[#1F3A2B]/70" />
+              <Trash2 className="h-4 w-4 text-[#1F3A2B]/70" strokeWidth={2} />
             </button>
           </div>
         </div>
       </div>
     </button>
+  )
+}
+
+function FavoritePreviewRow({
+  favorite,
+  onOpen,
+  onRemove,
+}: {
+  favorite: FavoriteDto
+  onOpen: () => void
+  onRemove: () => void
+}) {
+  const imageUrl = favorite.imageUrl || "/placeholder.svg"
+  const mealType = normalizeMealType(favorite.mealType)
+  const diffLabel = (favorite.difficulty ?? "—").toString().trim().toUpperCase()
+
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault()
+          onOpen()
+        }
+      }}
+      className="flex w-full cursor-pointer items-start gap-3 rounded-xl border border-[#E2D9CC] bg-white p-3.5 text-left shadow-sm outline-none hover:bg-[#FAF8F5] focus-visible:ring-2 focus-visible:ring-[#F97316] focus-visible:ring-offset-2"
+    >
+      <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-md bg-[#E4ECD4]/20">
+        <Image src={imageUrl} alt={favorite.title} fill className="object-cover" sizes="96px" />
+      </div>
+      <div className="min-w-0 flex-1 text-left">
+        <h3 className="line-clamp-2 font-serif text-sm font-semibold leading-snug text-[#1F3A2B]">
+          {favorite.title}
+        </h3>
+        <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-[#1F3A2B]/70">
+          <span className="inline-flex items-center gap-1">
+            <Clock className="h-3 w-3 shrink-0" aria-hidden />
+            {favorite.prepTime || "—"}
+          </span>
+          <span className="h-2.5 w-px shrink-0 bg-[#1F3A2B]/25" aria-hidden />
+          <span className="shrink-0 font-bold uppercase tracking-wide text-[#EA6A12]">{diffLabel}</span>
+        </div>
+        <span className="mt-1 inline-flex rounded-full bg-[#E4ECD4] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#4F6B1F]">
+          {mealType.toUpperCase()}
+        </span>
+      </div>
+      <div className="flex shrink-0 flex-col items-end justify-center gap-1.5 self-stretch py-0.5">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            onRemove()
+          }}
+          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-[#E2D9CC] bg-white hover:bg-[#F7F3EB]"
+          aria-label="Remove from Favorites"
+        >
+          <Trash2 className="h-4 w-4 text-[#1F3A2B]/70" strokeWidth={2} />
+        </button>
+        <span className="inline-flex h-8 w-8 items-center justify-center text-[#4F6B1F]" aria-hidden>
+          <ChevronDown className="h-5 w-5" />
+        </span>
+      </div>
+    </div>
   )
 }
 
@@ -361,6 +434,7 @@ export default function FavoritesPage() {
   const [mealFilter, setMealFilter] = useState<MealFilter>("All")
 
   const [selected, setSelected] = useState<FavoriteDto | null>(null)
+  const [expandedMobileId, setExpandedMobileId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!isHydrated) return
@@ -405,6 +479,13 @@ export default function FavoritesPage() {
     return list.filter((f) => byMeal(f) && byQuery(f))
   }, [favorites, mealFilter, query])
 
+  useEffect(() => {
+    if (!expandedMobileId) return
+    if (!filtered.some((f) => f.id === expandedMobileId)) {
+      setExpandedMobileId(null)
+    }
+  }, [filtered, expandedMobileId])
+
   const mealFilters: MealFilter[] = [
     "All",
     "Soup",
@@ -427,22 +508,24 @@ export default function FavoritesPage() {
     try {
       await deleteFavorite(fav.id, accessToken)
       setFavorites((prev) => (prev ?? []).filter((x) => x.id !== fav.id))
-      setSelected(null)
+      setSelected((prev) => (prev?.id === fav.id ? null : prev))
+      setExpandedMobileId((prev) => (prev === fav.id ? null : prev))
       toast.success("Removed from Favorites")
     } catch {
       toast.error("Could not remove favorite. Please try again.")
     }
   }
 
-  const open = Boolean(selected)
+  const open = Boolean(selected) && !isMobile
 
   return (
-    <div className="relative min-h-screen bg-[#F7F3EB] pb-20">
+    <div className="relative min-h-screen w-full min-w-0 max-w-full overflow-x-hidden bg-[#F7F3EB] pb-24">
       <DecorativeLeaves />
       <Header />
 
-      <main className="mx-auto max-w-[1440px] px-6 py-6 sm:px-8 sm:py-8 lg:px-12 xl:px-16">
-        <div className="mx-auto max-w-[1100px]">
+      <main className="mx-auto w-full min-w-0 max-w-[1440px] px-4 py-6 sm:px-8 sm:py-8 lg:px-12 xl:px-16">
+        <div className="mx-auto w-full min-w-0 max-w-[1100px]">
+          <>
           <div className="mb-6 space-y-2 text-center">
             <h1 className="font-serif text-2xl font-semibold text-[#1F3A2B] sm:text-3xl">Favorites</h1>
             <p className="text-sm text-[#1F3A2B]/70">All your favorite recipes in one place.</p>
@@ -463,17 +546,15 @@ export default function FavoritesPage() {
               />
             </div>
 
-            <div className="min-w-0 flex-1 rounded-xl border border-[#E2D9CC] bg-white p-1">
-              {/* Single row, full-width justified (mobile + desktop) */}
-              <div className="flex w-full min-w-0 flex-nowrap items-center justify-between gap-0 px-0.5">
+            <div className="min-w-0 flex-1 rounded-xl border border-[#E2D9CC] bg-white px-1 py-0.5 sm:px-1.5 sm:py-1">
+              <div className="grid w-full min-w-0 grid-cols-4 gap-x-1.5 gap-y-1 sm:grid-cols-8 sm:gap-x-2 sm:gap-y-0">
                 {mealFilters.map((f) => (
                   <button
                     key={f}
                     type="button"
                     onClick={() => setMealFilter(f)}
                     className={cn(
-                      "min-w-0 flex-1 basis-0 text-center whitespace-nowrap rounded-lg py-1.5 font-semibold transition",
-                      "px-1 text-[10px] leading-tight sm:px-1.5 sm:text-[11px] md:px-3 md:text-xs",
+                      "min-w-0 rounded-md px-1 py-1 text-center text-[10px] font-semibold leading-none transition sm:rounded-lg sm:px-1.5 sm:py-1 sm:text-xs",
                       mealFilter === f ? "bg-[#FDE9DD] text-[#EA6A12]" : "text-[#1F3A2B]/70 hover:text-[#1F3A2B]"
                     )}
                   >
@@ -508,15 +589,43 @@ export default function FavoritesPage() {
                 {countLabel}
               </div>
               {isMobile ? (
-                <div className="space-y-3">
-                  {filtered.map((f) => (
-                    <FavoriteRow
-                      key={f.id}
-                      favorite={f}
-                      onOpen={() => setSelected(f)}
-                      onRemove={() => void handleRemove(f)}
-                    />
-                  ))}
+                <div className="space-y-4">
+                  {filtered.map((f) => {
+                    if (expandedMobileId === f.id) {
+                      return (
+                        <div key={f.id} className="w-full min-w-0 max-w-full">
+                          <RecipeDetailMobileView
+                            recipe={favoriteDtoToRecipe(f)}
+                            onBack={() => setExpandedMobileId(null)}
+                            heartFilled
+                            onHeartClick={() => void handleRemove(f)}
+                            heartAriaLabel="Remove from favorites"
+                            showBackLink={false}
+                            collapseOnImage
+                            heartOnImageBottomRight
+                          />
+                        </div>
+                      )
+                    }
+                    if (expandedMobileId && expandedMobileId !== f.id) {
+                      return (
+                        <FavoritePreviewRow
+                          key={f.id}
+                          favorite={f}
+                          onOpen={() => setExpandedMobileId(f.id)}
+                          onRemove={() => void handleRemove(f)}
+                        />
+                      )
+                    }
+                    return (
+                      <FavoriteRow
+                        key={f.id}
+                        favorite={f}
+                        onOpen={() => setExpandedMobileId(f.id)}
+                        onRemove={() => void handleRemove(f)}
+                      />
+                    )
+                  })}
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -532,11 +641,12 @@ export default function FavoritesPage() {
               )}
             </>
           )}
+          </>
         </div>
       </main>
 
       {!isMobile ? (
-        <Dialog open={open} onOpenChange={(v) => setSelected(v ? selected : null)}>
+        <Dialog open={open} onOpenChange={(v) => !v && setSelected(null)}>
           <DialogContent
             className="w-[95vw] max-w-[95vw] gap-0 border-[#E2D9CC] bg-white p-0 sm:w-[76vw] sm:max-w-[min(1200px,80vw)] max-h-[85vh] overflow-y-auto overflow-x-hidden rounded-xl shadow-sm"
             showCloseButton={false}
@@ -548,17 +658,7 @@ export default function FavoritesPage() {
             ) : null}
           </DialogContent>
         </Dialog>
-      ) : (
-        <Drawer open={open} onOpenChange={(v) => setSelected(v ? selected : null)}>
-          <DrawerContent className="border-[#E2D9CC] bg-[#FBF8F2]">
-            <div className="max-h-[80vh] overflow-auto px-4 pb-6 pt-2">
-              {selected ? (
-                <DetailContent favorite={selected} />
-              ) : null}
-            </div>
-          </DrawerContent>
-        </Drawer>
-      )}
+      ) : null}
 
       <MobileNav
         activeTab="favorites"

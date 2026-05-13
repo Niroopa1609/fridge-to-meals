@@ -19,40 +19,62 @@ function normalizeCuisines(raw: unknown): string[] {
 }
 
 export async function GET(req: Request) {
-  const auth = await requireBearerUser(req)
-  if ("error" in auth) return auth.error
-  const supabase = createAdminClient()
-  const { data: row } = await supabase.from("user_preferences").select("preferred_cuisines").eq("user_id", auth.user.uid).maybeSingle()
-  if (!row) {
-    return NextResponse.json({ preferredCuisines: [], hasCompletedOnboarding: false })
+  try {
+    const auth = await requireBearerUser(req)
+    if ("error" in auth) return auth.error
+    let supabase
+    try {
+      supabase = createAdminClient()
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Server misconfiguration"
+      return NextResponse.json({ error: msg }, { status: 503 })
+    }
+    const { data: row } = await supabase.from("user_preferences").select("preferred_cuisines").eq("user_id", auth.user.uid).maybeSingle()
+    if (!row) {
+      return NextResponse.json({ preferredCuisines: [], hasCompletedOnboarding: false })
+    }
+    const preferredCuisines = normalizeCuisines(row.preferred_cuisines)
+    return NextResponse.json({ preferredCuisines, hasCompletedOnboarding: true })
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Internal error"
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
-  const preferredCuisines = normalizeCuisines(row.preferred_cuisines)
-  return NextResponse.json({ preferredCuisines, hasCompletedOnboarding: true })
 }
 
 export async function POST(req: Request) {
-  const auth = await requireBearerUser(req)
-  if ("error" in auth) return auth.error
-  const body = (await req.json()) as { preferredCuisines?: unknown }
-  const preferredCuisines = normalizeCuisines(body.preferredCuisines)
-  const supabase = createAdminClient()
-  const now = new Date().toISOString()
-  const { data: existing } = await supabase.from("user_preferences").select("id").eq("user_id", auth.user.uid).maybeSingle()
-  if (existing?.id) {
-    const { error } = await supabase
-      .from("user_preferences")
-      .update({ preferred_cuisines: preferredCuisines, updated_at: now })
-      .eq("id", existing.id)
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
-  } else {
-    const { error } = await supabase.from("user_preferences").insert({
-      id: crypto.randomUUID(),
-      user_id: auth.user.uid,
-      preferred_cuisines: preferredCuisines,
-      created_at: now,
-      updated_at: now,
-    })
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+  try {
+    const auth = await requireBearerUser(req)
+    if ("error" in auth) return auth.error
+    const body = (await req.json()) as { preferredCuisines?: unknown }
+    const preferredCuisines = normalizeCuisines(body.preferredCuisines)
+    let supabase
+    try {
+      supabase = createAdminClient()
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Server misconfiguration"
+      return NextResponse.json({ error: msg }, { status: 503 })
+    }
+    const now = new Date().toISOString()
+    const { data: existing } = await supabase.from("user_preferences").select("id").eq("user_id", auth.user.uid).maybeSingle()
+    if (existing?.id) {
+      const { error } = await supabase
+        .from("user_preferences")
+        .update({ preferred_cuisines: preferredCuisines, updated_at: now })
+        .eq("id", existing.id)
+      if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+    } else {
+      const { error } = await supabase.from("user_preferences").insert({
+        id: crypto.randomUUID(),
+        user_id: auth.user.uid,
+        preferred_cuisines: preferredCuisines,
+        created_at: now,
+        updated_at: now,
+      })
+      if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+    return NextResponse.json({ preferredCuisines, hasCompletedOnboarding: true })
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Internal error"
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
-  return NextResponse.json({ preferredCuisines, hasCompletedOnboarding: true })
 }

@@ -62,13 +62,13 @@ export function FilterSection({
   onCookingStyleChange,
 }: FilterSectionProps) {
   return (
-    <div className="grid w-full max-w-full min-w-0 grid-cols-3 gap-2">
+    <div className="grid w-full max-w-full min-w-0 grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)_minmax(0,1.2fr)] gap-1.5 sm:grid-cols-3 sm:gap-2">
       <div className="min-w-0 space-y-1.5">
-        <label className="flex min-w-0 items-center gap-0.5 whitespace-nowrap text-[9px] font-medium leading-tight text-[#1F3A2B] sm:gap-1.5 sm:text-sm sm:leading-normal">
-          <span className="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5 sm:[&_svg]:h-[18px] sm:[&_svg]:w-[18px]">
+        <label className="flex min-w-0 items-center gap-1 whitespace-nowrap text-sm font-medium leading-tight text-[#1F3A2B] sm:gap-1.5 sm:leading-normal">
+          <span className="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4 sm:[&_svg]:h-[18px] sm:[&_svg]:w-[18px]">
             <CuisineIcon />
           </span>
-          <span>Cuisine</span>
+          <span className="min-w-0">Cuisine</span>
         </label>
         <Select value={cuisine} onValueChange={onCuisineChange}>
           <SelectTrigger className="h-11 w-full min-w-0 max-w-full rounded-lg border-[#E2D9CC] bg-white px-2 text-xs text-[#1F3A2B] sm:px-3 sm:text-sm">
@@ -97,11 +97,11 @@ export function FilterSection({
       </div>
 
       <div className="min-w-0 space-y-1.5">
-        <label className="flex min-w-0 items-center gap-0.5 whitespace-nowrap text-[9px] font-medium leading-tight text-[#1F3A2B] sm:gap-1.5 sm:text-sm sm:leading-normal">
-          <span className="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5 sm:[&_svg]:h-[18px] sm:[&_svg]:w-[18px]">
+        <label className="flex min-w-0 items-center gap-1 whitespace-nowrap text-sm font-medium leading-tight text-[#1F3A2B] sm:gap-1.5 sm:leading-normal">
+          <span className="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4 sm:[&_svg]:h-[18px] sm:[&_svg]:w-[18px]">
             <ClockIcon />
           </span>
-          <span>Meal Prep Time</span>
+          <span className="min-w-0">Prep Time</span>
         </label>
         <Select value={prepTime} onValueChange={onPrepTimeChange}>
           <SelectTrigger className="h-11 w-full min-w-0 max-w-full rounded-lg border-[#E2D9CC] bg-white px-2 text-xs text-[#1F3A2B] sm:px-3 sm:text-sm">
@@ -117,11 +117,11 @@ export function FilterSection({
       </div>
 
       <div className="min-w-0 space-y-1.5">
-        <label className="flex min-w-0 items-center gap-0.5 whitespace-nowrap text-[9px] font-medium leading-tight text-[#1F3A2B] sm:gap-1.5 sm:text-sm sm:leading-normal">
-          <span className="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5 sm:[&_svg]:h-[18px] sm:[&_svg]:w-[18px]">
+        <label className="flex min-w-0 items-center gap-1 whitespace-nowrap text-sm font-medium leading-tight text-[#1F3A2B] sm:gap-1.5 sm:leading-normal">
+          <span className="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4 sm:[&_svg]:h-[18px] sm:[&_svg]:w-[18px]">
             <CookingIcon />
           </span>
-          <span>Cooking Style</span>
+          <span className="min-w-0">Cooking Style</span>
         </label>
         <Select value={cookingStyle} onValueChange={onCookingStyleChange}>
           <SelectTrigger className="h-11 w-full min-w-0 max-w-full rounded-lg border-[#E2D9CC] bg-white px-2 text-xs text-[#1F3A2B] sm:px-3 sm:text-sm">

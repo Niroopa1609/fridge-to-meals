@@ -12,6 +12,8 @@ type Props = {
   subtitle?: string
   rightAction?: React.ReactNode
   containerClassName?: string
+  /** Today’s Picks: hide “Back to recipes” on mobile expanded detail */
+  hideMobileRecipeBackLink?: boolean
 }
 
 export function RecipesSection({
@@ -23,6 +25,7 @@ export function RecipesSection({
   subtitle,
   rightAction,
   containerClassName,
+  hideMobileRecipeBackLink = false,
 }: Props) {
   return (
     <div
@@ -59,6 +62,7 @@ export function RecipesSection({
               isExpanded={isExpanded}
               onToggleExpand={() => onToggleExpand(recipe.id)}
               isMobile={isMobile}
+              hideMobileRecipeBackLink={hideMobileRecipeBackLink}
             />
           )
         })}

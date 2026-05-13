@@ -9,13 +9,12 @@ import {
   Heart,
   ArrowRight,
   Minus,
-  ArrowLeft,
   ChevronDown,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { RecipeShare } from "@/features/recipe-generator/components/recipe-share"
+import { RecipeDetailMobileView } from "@/components/recipe-detail-mobile-view"
 import { useAuth } from "@/features/auth/context/auth-context"
 import { saveFavorite } from "@/features/favorites/services/favorites"
 import { toast } from "sonner"
@@ -46,6 +45,8 @@ interface RecipeCardProps {
   isExpanded: boolean
   onToggleExpand: () => void
   isMobile?: boolean
+  /** Mobile expanded detail: hide “Back to recipes” (e.g. Today’s Picks). Chevron collapse stays. */
+  hideMobileRecipeBackLink?: boolean
 }
 
 export function RecipeCard({
@@ -53,6 +54,7 @@ export function RecipeCard({
   isExpanded,
   onToggleExpand,
   isMobile = false,
+  hideMobileRecipeBackLink = false,
 }: RecipeCardProps) {
   const [isFavorited, setIsFavorited] = useState(false)
   const [isSavingFavorite, setIsSavingFavorite] = useState(false)
@@ -144,60 +146,55 @@ export function RecipeCard({
   if (!isExpanded) {
     if (isMobile) {
       return (
-        <div className="flex items-center gap-3 rounded-xl border border-[#E2D9CC] bg-white p-3 shadow-sm">
-          <div className="relative h-[74px] w-[104px] shrink-0 overflow-hidden rounded-lg">
-            <Image src={recipe.image} alt={recipe.title} fill className="object-cover" />
+        <button
+          type="button"
+          onClick={onToggleExpand}
+          className="flex w-full items-start gap-3 rounded-xl border border-[#E2D9CC] bg-white p-3.5 text-left shadow-sm"
+        >
+          <div className="relative h-[88px] w-[112px] max-[480px]:w-[104px] shrink-0 overflow-hidden rounded-md bg-[#E4ECD4]/20">
+            <Image src={recipe.image} alt={recipe.title} fill className="object-cover" sizes="120px" />
           </div>
-          <div className="min-w-0 flex-1">
-            <div className="mb-1 flex items-center gap-2">
-              <span className="rounded bg-[#E4ECD4] px-2 py-0.5 text-[11px] font-semibold uppercase text-[#4F6B1F]">
-                {recipe.mealType}
-              </span>
-              <span
-                className={cn(
-                  "rounded px-2 py-0.5 text-[11px] font-semibold",
-                  difficultyStyles[recipe.difficulty]
-                )}
-              >
-                {recipe.difficulty}
-              </span>
-            </div>
-            <h3 className="truncate font-serif text-[15px] font-semibold text-[#1F3A2B]">
+          <div className="flex min-w-0 flex-1 flex-col text-left">
+            <h3 className="line-clamp-2 font-serif text-[15px] font-semibold leading-snug text-[#1F3A2B]">
               {recipe.title}
             </h3>
-            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#1F3A2B]/70">
-              <span className="flex items-center gap-1">
-                <Clock className="h-3.5 w-3.5" />
-                {recipe.time}
+            <div className="mt-1.5 flex min-w-0 items-center text-xs">
+              <span className="flex shrink-0 items-center gap-1 text-[#1F3A2B]/70">
+                <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                <span className="min-w-0">{recipe.time}</span>
               </span>
-              <span className="flex items-center gap-1">
-                <Users className="h-3.5 w-3.5" />
-                {recipe.servings} servings
+              <span className="mx-2 h-3 w-px shrink-0 bg-[#1F3A2B]/25" aria-hidden />
+              <span className="shrink-0 text-xs font-bold uppercase tracking-wide text-[#EA6A12]">
+                {recipe.difficulty}
               </span>
+              <span className="min-w-0 flex-1" aria-hidden />
+            </div>
+            <div className="mt-1.5 flex min-w-0 items-center justify-between gap-2">
+              <span className="inline-flex min-w-0 shrink rounded-full bg-[#E4ECD4] px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[#4F6B1F]">
+                {recipe.mealType.toUpperCase()}
+              </span>
+              <div className="flex shrink-0 items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    void handleSaveFavorite(e.currentTarget)
+                  }}
+                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-[#E2D9CC] bg-white hover:bg-[#F7F3EB]"
+                  aria-label={isFavorited ? "Saved to favorites" : "Save to favorites"}
+                  disabled={isSavingFavorite}
+                >
+                  <Heart
+                    className={cn(
+                      "h-5 w-5",
+                      isFavorited ? "fill-[#F97316] text-[#F97316]" : "text-[#4F6B1F]"
+                    )}
+                  />
+                </button>
+              </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={(e) => handleSaveFavorite(e.currentTarget)}
-              className="rounded-lg border border-[#E2D9CC] p-2 hover:bg-[#E4ECD4]"
-              aria-label={isFavorited ? "Remove from favorites" : "Save to favorites"}
-            >
-              <Heart
-                className={cn(
-                  "h-5 w-5",
-                  isFavorited ? "fill-[#F97316] text-[#F97316]" : "text-[#4F6B1F]"
-                )}
-              />
-            </button>
-            <button
-              onClick={onToggleExpand}
-              className="rounded-lg border border-[#E2D9CC] p-2 hover:bg-[#E4ECD4]"
-              aria-label="View full recipe"
-            >
-              <ArrowRight className="h-5 w-5 text-[#4F6B1F]" />
-            </button>
-          </div>
-        </div>
+        </button>
       )
     }
 
@@ -294,203 +291,20 @@ export function RecipeCard({
     )
   }
 
-  // Expanded card view - Mobile
+  // Expanded card view - Mobile (shared with Favorites — see `RecipeDetailMobileView`)
   if (isMobile) {
     return (
-      <div className="space-y-4">
-        <button
-          onClick={onToggleExpand}
-          className="flex items-center gap-1.5 text-sm font-medium text-[#4F6B1F]"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to recipes
-        </button>
-
-        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl">
-          <Image
-            src={recipe.image}
-            alt={recipe.title}
-            fill
-            className="object-cover"
-          />
-          <button
-            onClick={(e) => handleSaveFavorite(e.currentTarget)}
-            className="absolute right-3 top-3 rounded-lg bg-white p-2 shadow-md"
-            aria-label={isFavorited ? "Remove from favorites" : "Save to favorites"}
-          >
-            <Heart
-              className={cn(
-                "h-5 w-5",
-                isFavorited ? "fill-[#F97316] text-[#F97316]" : "text-[#4F6B1F]"
-              )}
-            />
-          </button>
-        </div>
-
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <span className="rounded bg-[#E4ECD4] px-2.5 py-1 text-xs font-semibold uppercase text-[#4F6B1F]">
-              {recipe.mealType}
-            </span>
-            <span
-              className={cn(
-                "rounded px-2.5 py-1 text-xs font-semibold",
-                difficultyStyles[recipe.difficulty]
-              )}
-            >
-              {recipe.difficulty}
-            </span>
-          </div>
-
-          <h2 className="font-serif text-2xl font-bold text-[#1F3A2B]">{recipe.title}</h2>
-
-          <div className="flex items-center gap-4 text-sm text-[#1F3A2B]/70">
-            <span className="flex items-center gap-1.5">
-              <Clock className="h-4 w-4" />
-              {recipe.time}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Users className="h-4 w-4" />
-              {recipe.servings} servings
-            </span>
-            {recipe.isVegetarian && (
-              <span className="flex items-center gap-1.5 text-[#4F6B1F]">
-                <Leaf className="h-4 w-4" />
-                Vegetarian
-              </span>
-            )}
-          </div>
-
-          <p className="text-sm text-[#1F3A2B]/70 leading-relaxed">{recipe.description}</p>
-
-          <div className="flex gap-3">
-            <RecipeShare recipe={recipe} />
-          </div>
-        </div>
-
-        <Tabs defaultValue="ingredients" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-[#F7F3EB] rounded-lg">
-            <TabsTrigger value="ingredients" className="data-[state=active]:bg-white rounded-lg text-[#1F3A2B]">
-              <span className="mr-1.5 text-[#F97316]">📦</span> Ingredients
-            </TabsTrigger>
-            <TabsTrigger value="instructions" className="data-[state=active]:bg-white rounded-lg text-[#1F3A2B]">
-              <span className="mr-1.5 text-[#F97316]">🔥</span> Instructions
-            </TabsTrigger>
-            <TabsTrigger value="nutrition" className="data-[state=active]:bg-white rounded-lg text-[#1F3A2B]">
-              <span className="mr-1.5 text-[#F97316]">❤️</span> Nutrition
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="ingredients" className="space-y-4 pt-4">
-            <div className="rounded-xl border border-[#E2D9CC] bg-white p-4">
-              <h4 className="mb-3 flex items-center gap-2 font-semibold text-[#1F3A2B]">
-                <span className="text-[#F97316]">📦</span> Ingredients
-              </h4>
-              <div className="grid grid-cols-2 gap-2">
-                {recipe.ingredients.map((ingredient, index) => (
-                  <p key={index} className="text-sm text-[#1F3A2B]/70">
-                    <span className="mr-2 text-[#F97316]">•</span>
-                    {ingredient}
-                  </p>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <h4 className="flex items-center gap-2 font-semibold text-[#1F3A2B]">
-                <span className="text-[#F97316]">🔥</span> Instructions
-              </h4>
-              {recipe.instructions.map((instruction, index) => (
-                <div key={index} className="flex gap-3">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#F97316] text-xs font-bold text-white">
-                    {index + 1}
-                  </span>
-                  <p className="text-sm text-[#1F3A2B]/70 leading-relaxed">{instruction}</p>
-                </div>
-              ))}
-            </div>
-
-            <div className="rounded-xl bg-[#E4ECD4] p-4">
-              <h4 className="mb-2 flex items-center gap-2 font-semibold text-[#1F3A2B]">
-                <span>🥄</span> Pro Tips
-              </h4>
-              <ul className="space-y-1">
-                {recipe.proTips.map((tip, index) => (
-                  <li key={index} className="text-sm text-[#4F6B1F]">
-                    • {tip}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="grid grid-cols-4 gap-2 rounded-xl bg-[#F7F3EB] p-4 text-center">
-              <div>
-                <p className="text-lg font-bold text-[#1F3A2B]">
-                  {recipe.nutrition.calories}
-                </p>
-                <p className="text-xs text-[#1F3A2B]/70">Calories</p>
-              </div>
-              <div>
-                <p className="text-lg font-bold text-[#1F3A2B]">
-                  {recipe.nutrition.protein}
-                </p>
-                <p className="text-xs text-[#1F3A2B]/70">Protein</p>
-              </div>
-              <div>
-                <p className="text-lg font-bold text-[#1F3A2B]">
-                  {recipe.nutrition.carbs}
-                </p>
-                <p className="text-xs text-[#1F3A2B]/70">Carbs</p>
-              </div>
-              <div>
-                <p className="text-lg font-bold text-[#1F3A2B]">
-                  {recipe.nutrition.fat}
-                </p>
-                <p className="text-xs text-[#1F3A2B]/70">Fat</p>
-              </div>
-            </div>
-          </TabsContent>
-          <TabsContent value="instructions" className="space-y-4 pt-4">
-            <div className="space-y-3">
-              {recipe.instructions.map((instruction, index) => (
-                <div key={index} className="flex gap-3">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#F97316] text-xs font-bold text-white">
-                    {index + 1}
-                  </span>
-                  <p className="text-sm text-[#1F3A2B]/70 leading-relaxed">{instruction}</p>
-                </div>
-              ))}
-            </div>
-          </TabsContent>
-          <TabsContent value="nutrition" className="pt-4">
-            <div className="grid grid-cols-4 gap-2 rounded-xl bg-[#F7F3EB] p-4 text-center">
-              <div>
-                <p className="text-lg font-bold text-[#1F3A2B]">
-                  {recipe.nutrition.calories}
-                </p>
-                <p className="text-xs text-[#1F3A2B]/70">Calories</p>
-              </div>
-              <div>
-                <p className="text-lg font-bold text-[#1F3A2B]">
-                  {recipe.nutrition.protein}
-                </p>
-                <p className="text-xs text-[#1F3A2B]/70">Protein</p>
-              </div>
-              <div>
-                <p className="text-lg font-bold text-[#1F3A2B]">
-                  {recipe.nutrition.carbs}
-                </p>
-                <p className="text-xs text-[#1F3A2B]/70">Carbs</p>
-              </div>
-              <div>
-                <p className="text-lg font-bold text-[#1F3A2B]">
-                  {recipe.nutrition.fat}
-                </p>
-                <p className="text-xs text-[#1F3A2B]/70">Fat</p>
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </div>
+      <RecipeDetailMobileView
+        recipe={recipe}
+        onBack={onToggleExpand}
+        heartFilled={isFavorited}
+        onHeartClick={(e) => void handleSaveFavorite(e.currentTarget)}
+        heartAriaLabel={isFavorited ? "Saved to favorites" : "Save to favorites"}
+        heartDisabled={isSavingFavorite || isFavorited}
+        showBackLink={!hideMobileRecipeBackLink}
+        collapseOnImage={hideMobileRecipeBackLink}
+        heartOnImageBottomRight={hideMobileRecipeBackLink}
+      />
     )
   }
 
