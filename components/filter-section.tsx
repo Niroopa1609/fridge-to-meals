@@ -20,7 +20,7 @@ interface FilterSectionProps {
 // Globe/Earth icon for Cuisine
 function CuisineIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F97316" strokeWidth="1.5">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
       <circle cx="12" cy="12" r="9" />
       <ellipse cx="12" cy="12" rx="4" ry="9" />
       <path d="M3 12h18" />
@@ -33,7 +33,7 @@ function CuisineIcon() {
 // Clock icon for Meal Prep Type
 function ClockIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F97316" strokeWidth="1.5">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
       <circle cx="12" cy="12" r="9" />
       <path d="M12 6v6l4 2" strokeLinecap="round" />
     </svg>
@@ -43,7 +43,7 @@ function ClockIcon() {
 // Pan/Cooking icon for Cooking Style
 function CookingIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F97316" strokeWidth="1.5">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
       <path d="M4 16h16v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2z" />
       <path d="M4 16c0-4 3-7 8-7s8 3 8 7" />
       <path d="M12 9V5" strokeLinecap="round" />
@@ -62,16 +62,16 @@ export function FilterSection({
   onCookingStyleChange,
 }: FilterSectionProps) {
   return (
-    <div className="grid w-full max-w-full min-w-0 grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)_minmax(0,1.2fr)] gap-1.5 sm:grid-cols-3 sm:gap-2">
+    <div className="grid w-full max-w-full min-w-0 grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-5 lg:grid-cols-3">
       <div className="min-w-0 space-y-1.5">
         <label className="flex min-w-0 items-center gap-1 whitespace-nowrap text-sm font-medium leading-tight text-[#1F3A2B] sm:gap-1.5 sm:leading-normal">
-          <span className="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4 sm:[&_svg]:h-[18px] sm:[&_svg]:w-[18px]">
+          <span className="inline-flex shrink-0 text-[#4F6B1F] [&_svg]:h-4 [&_svg]:w-4 sm:[&_svg]:h-[18px] sm:[&_svg]:w-[18px]">
             <CuisineIcon />
           </span>
           <span className="min-w-0">Cuisine</span>
         </label>
         <Select value={cuisine} onValueChange={onCuisineChange}>
-          <SelectTrigger className="h-11 w-full min-w-0 max-w-full rounded-lg border-[#E2D9CC] bg-white px-2 text-xs text-[#1F3A2B] sm:px-3 sm:text-sm">
+          <SelectTrigger className="h-11 w-full min-w-0 max-w-full rounded-xl border-[#E8DFD0] bg-[#FAF7F0]/60 px-2 text-xs text-[#1F3A2B] sm:px-3 sm:text-sm">
             <SelectValue placeholder="Any" />
           </SelectTrigger>
           <SelectContent>
@@ -98,13 +98,13 @@ export function FilterSection({
 
       <div className="min-w-0 space-y-1.5">
         <label className="flex min-w-0 items-center gap-1 whitespace-nowrap text-sm font-medium leading-tight text-[#1F3A2B] sm:gap-1.5 sm:leading-normal">
-          <span className="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4 sm:[&_svg]:h-[18px] sm:[&_svg]:w-[18px]">
+          <span className="inline-flex shrink-0 text-[#4F6B1F] [&_svg]:h-4 [&_svg]:w-4 sm:[&_svg]:h-[18px] sm:[&_svg]:w-[18px]">
             <ClockIcon />
           </span>
           <span className="min-w-0">Prep Time</span>
         </label>
         <Select value={prepTime} onValueChange={onPrepTimeChange}>
-          <SelectTrigger className="h-11 w-full min-w-0 max-w-full rounded-lg border-[#E2D9CC] bg-white px-2 text-xs text-[#1F3A2B] sm:px-3 sm:text-sm">
+          <SelectTrigger className="h-11 w-full min-w-0 max-w-full rounded-xl border-[#E8DFD0] bg-[#FAF7F0]/60 px-2 text-xs text-[#1F3A2B] sm:px-3 sm:text-sm">
             <SelectValue placeholder="Any" />
           </SelectTrigger>
           <SelectContent>
@@ -118,13 +118,13 @@ export function FilterSection({
 
       <div className="min-w-0 space-y-1.5">
         <label className="flex min-w-0 items-center gap-1 whitespace-nowrap text-sm font-medium leading-tight text-[#1F3A2B] sm:gap-1.5 sm:leading-normal">
-          <span className="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4 sm:[&_svg]:h-[18px] sm:[&_svg]:w-[18px]">
+          <span className="inline-flex shrink-0 text-[#4F6B1F] [&_svg]:h-4 [&_svg]:w-4 sm:[&_svg]:h-[18px] sm:[&_svg]:w-[18px]">
             <CookingIcon />
           </span>
           <span className="min-w-0">Cooking Style</span>
         </label>
         <Select value={cookingStyle} onValueChange={onCookingStyleChange}>
-          <SelectTrigger className="h-11 w-full min-w-0 max-w-full rounded-lg border-[#E2D9CC] bg-white px-2 text-xs text-[#1F3A2B] sm:px-3 sm:text-sm">
+          <SelectTrigger className="h-11 w-full min-w-0 max-w-full rounded-xl border-[#E8DFD0] bg-[#FAF7F0]/60 px-2 text-xs text-[#1F3A2B] sm:px-3 sm:text-sm">
             <SelectValue placeholder="Any" />
           </SelectTrigger>
           <SelectContent>

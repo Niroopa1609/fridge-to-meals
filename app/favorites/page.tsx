@@ -519,7 +519,7 @@ export default function FavoritesPage() {
   const open = Boolean(selected) && !isMobile
 
   return (
-    <div className="relative min-h-screen w-full min-w-0 max-w-full overflow-x-hidden bg-[#F7F3EB] pb-24">
+    <div className="relative min-h-screen w-full min-w-0 max-w-full overflow-x-hidden bg-[#F7F3EB] pb-28">
       <DecorativeLeaves />
       <Header />
 

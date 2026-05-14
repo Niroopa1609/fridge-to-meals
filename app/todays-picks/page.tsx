@@ -21,7 +21,7 @@ export default function TodaysPicksPage() {
   }, [accessToken, isHydrated, router, user])
 
   return (
-    <div className="relative min-h-screen bg-[#F7F3EB] pb-20">
+    <div className="relative min-h-screen bg-[#F7F3EB] pb-28">
       <DecorativeLeaves />
       <Header />
 

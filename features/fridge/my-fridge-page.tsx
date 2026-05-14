@@ -460,7 +460,7 @@ export function MyFridgePage() {
   const saveableCount = detectedIngredients.length
 
   return (
-    <div className="relative min-h-screen bg-[#F7F3EB] pb-24">
+    <div className="relative min-h-screen bg-[#F7F3EB] pb-28">
       <DecorativeLeaves />
       <Header />
 
