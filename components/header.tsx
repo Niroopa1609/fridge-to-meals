@@ -63,8 +63,8 @@ export function Header({ variant = "default" }: { variant?: HeaderVariant }) {
           className="w-full overflow-x-hidden text-white shadow-[0_10px_28px_-12px_rgba(35,74,15,0.35)]"
           style={{ background: "linear-gradient(to right, #234A0F, #2E5B12, #234A0F)" }}
         >
-          <div className="mx-auto flex min-h-[3.75rem] w-full min-w-0 max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-2 sm:min-h-[4rem] sm:gap-2.5 sm:px-6 sm:py-2.5 lg:max-w-[1200px] lg:px-10">
-            <div className="flex min-w-0 flex-1 items-center gap-2.5 sm:gap-3">
+          <div className="mx-auto flex min-h-[3.75rem] w-full min-w-0 max-w-6xl flex-row items-center justify-between gap-2 px-4 py-2 sm:min-h-[4rem] sm:gap-2.5 sm:px-6 sm:py-2.5 lg:max-w-[1200px] lg:px-10">
+            <div className="flex min-w-0 flex-1 items-center gap-2 pr-1 sm:gap-3 sm:pr-0">
               <button
                 type="button"
                 onClick={() => router.push("/")}
@@ -83,17 +83,15 @@ export function Header({ variant = "default" }: { variant?: HeaderVariant }) {
               </div>
             </div>
 
-            <div className="flex shrink-0 flex-col items-end gap-2 sm:flex-row sm:items-center sm:gap-3">
+            <div className="flex shrink-0 flex-col items-end justify-center gap-1 sm:flex-row sm:items-center sm:gap-2 md:gap-3">
               {isHydrated && user ? (
                 <>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-white/95 sm:text-base">
-                      Hi {toTitleCaseName(user.name)} <span aria-hidden>👋</span>
-                    </span>
-                  </div>
+                  <span className="max-w-[5.5rem] truncate text-right text-[10px] font-medium leading-tight text-white/95 sm:max-w-none sm:text-base">
+                    Hi {toTitleCaseName(user.name)} <span aria-hidden>👋</span>
+                  </span>
                   <Button
                     variant="outline"
-                    className="h-9 rounded-full border border-white/70 bg-transparent px-4 text-xs font-semibold text-white hover:bg-white/10 sm:h-10 sm:px-5 sm:text-sm"
+                    className="h-7 shrink-0 rounded-full border border-white/70 bg-transparent px-2.5 text-[10px] font-semibold leading-none text-white hover:bg-white/10 sm:h-10 sm:px-5 sm:text-sm"
                     onClick={async () => {
                       await logout()
                       router.push("/")
@@ -103,16 +101,16 @@ export function Header({ variant = "default" }: { variant?: HeaderVariant }) {
                   </Button>
                 </>
               ) : (
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-2">
                   <Button
                     variant="outline"
-                    className="h-9 rounded-full border border-white/70 bg-transparent px-4 text-xs font-semibold text-white hover:bg-white/10"
+                    className="h-7 shrink-0 rounded-full border border-white/70 bg-transparent px-2.5 text-[10px] font-semibold leading-none text-white hover:bg-white/10 sm:h-9 sm:px-4 sm:text-xs"
                     onClick={openSignInFromHeader}
                   >
                     Sign In
                   </Button>
                   <Button
-                    className="h-9 rounded-full border border-white/70 bg-white px-4 text-xs font-semibold text-[#2F4A16] hover:bg-white/90"
+                    className="h-7 shrink-0 rounded-full border border-white/70 bg-white px-2.5 text-[10px] font-semibold leading-none text-[#2F4A16] hover:bg-white/90 sm:h-9 sm:px-4 sm:text-xs"
                     onClick={() => setIsSignUpOpen(true)}
                   >
                     Sign Up
@@ -156,7 +154,7 @@ export function Header({ variant = "default" }: { variant?: HeaderVariant }) {
           </h1>
 
           <div className="flex min-w-0 justify-end justify-self-end">
-            <div className="flex flex-col items-center justify-center gap-1 md:hidden">
+            <div className="flex flex-col items-end justify-center gap-1 md:hidden">
               {isHydrated && user ? (
                 <>
                   <Button
@@ -177,13 +175,13 @@ export function Header({ variant = "default" }: { variant?: HeaderVariant }) {
                 <>
                   <Button
                     variant="outline"
-                    className="h-7 rounded-md border border-white/60 bg-transparent px-2.5 text-xs font-medium text-white hover:bg-white/10"
+                    className="h-6 shrink-0 rounded-full border border-white/60 bg-transparent px-2 text-[9px] font-medium leading-none text-white hover:bg-white/10"
                     onClick={openSignInFromHeader}
                   >
                     Sign In
                   </Button>
                   <Button
-                    className="h-7 rounded-md border border-white/60 bg-white px-2.5 text-xs font-semibold text-[#3A4F16] hover:bg-white/90"
+                    className="h-6 shrink-0 rounded-full border border-white/60 bg-white px-2 text-[9px] font-semibold leading-none text-[#3A4F16] hover:bg-white/90"
                     onClick={() => setIsSignUpOpen(true)}
                   >
                     Sign Up

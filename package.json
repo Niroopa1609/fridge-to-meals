@@ -7,7 +7,8 @@
     "dev:turbo": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "db:password-reset-table": "node scripts/apply-password-reset-table.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -53,6 +54,7 @@
     "lucide-react": "^0.564.0",
     "next": "^16.2.4",
     "next-themes": "^0.4.6",
+    "nodemailer": "^8.0.7",
     "react": "^19.2.5",
     "react-day-picker": "9.13.2",
     "react-dom": "^19.2.5",
@@ -68,6 +70,7 @@
     "@tailwindcss/postcss": "^4.2.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22",
+    "@types/nodemailer": "^8.0.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "postcss": "^8.5",

@@ -10,6 +10,7 @@ import { MealTypeSelector } from "@/components/meal-type-selector"
 import { RecipeCard, RecipePreviewCard } from "@/components/recipe-card"
 import { MobileNav } from "@/components/mobile-nav"
 import { useIsMobile } from "@/components/ui/use-mobile"
+import { DecorativeLeaves } from "@/features/recipe-generator/components/decorative-leaves"
 import { RecipeHeroBanner } from "@/features/recipe-generator/components/recipe-hero-banner"
 import { RecipesSection } from "@/features/recipe-generator/components/recipes-section"
 import { useRecipeGenerator } from "@/features/recipe-generator/hooks/use-recipe-generator"
@@ -138,6 +139,7 @@ export function RecipeGeneratorPage() {
 
   return (
     <div className="relative min-h-screen w-full min-w-0 max-w-full overflow-x-hidden bg-[#F8F5EF] pb-[5.5rem] sm:pb-24">
+      <DecorativeLeaves />
       <Header variant="recipe" />
 
       <main className="mx-auto w-full min-w-0 max-w-6xl px-4 py-3 sm:px-6 sm:py-4 lg:max-w-[1200px] lg:px-10 lg:py-5">

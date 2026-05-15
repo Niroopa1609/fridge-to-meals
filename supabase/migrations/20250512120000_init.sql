@@ -1,4 +1,4 @@
--- Fridge to Meals — initial schema for Supabase PostgreSQL
+-- Fridge To Meals — initial schema for Supabase PostgreSQL
 --
 -- AUTH DECISION (Option B): Keep public.users + password_hash + refresh_tokens.
 -- This matches the prior Spring Boot app and avoids migrating passwords into Supabase Auth.

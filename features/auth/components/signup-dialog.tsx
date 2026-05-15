@@ -1,12 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { CheckIcon, CircleIcon } from "lucide-react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/features/auth/context/auth-context"
+import { RememberEmailCheckbox } from "@/features/auth/components/remember-email-checkbox"
+import { readRememberedEmail, writeRememberedEmail } from "@/features/auth/remember-email"
 
 function isValidEmail(value: string) {
   const t = value.trim()
@@ -29,13 +31,32 @@ export function SignUpDialog({
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [rememberEmail, setRememberEmail] = useState(false)
+
+  useEffect(() => {
+    if (!open) return
+    const saved = readRememberedEmail()
+    setRememberEmail(saved.remember)
+    if (saved.email) setEmail(saved.email)
+  }, [open])
+
+  const handleRememberEmailChange = (checked: boolean) => {
+    setRememberEmail(checked)
+    writeRememberedEmail(email, checked)
+  }
+
+  const handleEmailChange = (value: string) => {
+    setEmail(value)
+    if (rememberEmail) writeRememberedEmail(value, true)
+  }
 
   const submit = async () => {
     setError(null)
     setIsLoading(true)
     try {
       await signUp({ name, email, password })
-      toast.success("Welcome to Daily Meal Decider! Your account is ready.")
+      writeRememberedEmail(email, rememberEmail)
+      toast.success("Welcome to Fridge To Meals! Your account is ready.")
       onOpenChange(false)
       onSuccess?.()
       setPassword("")
@@ -79,10 +100,16 @@ export function SignUpDialog({
             <label className="text-sm font-medium text-[#1F3A2B]">Email</label>
             <Input
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => handleEmailChange(e.target.value)}
               placeholder="user@example.com"
               className="border-[#E2D9CC] bg-white"
               type="email"
+              autoComplete="email"
+            />
+            <RememberEmailCheckbox
+              id="signup-remember-email"
+              checked={rememberEmail}
+              onCheckedChange={handleRememberEmailChange}
             />
           </div>
           <div className="space-y-1.5">

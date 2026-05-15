@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { Heart, Leaf, Minus, Search, Clock, Trash2, Users, ChevronDown } from "lucide-react"
@@ -18,22 +18,130 @@ import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog"
 import { RecipeShare } from "@/features/recipe-generator/components/recipe-share"
 import { favoriteDtoToRecipe } from "@/features/favorites/utils/favorite-to-recipe"
 
-type MealFilter =
-  | "All"
-  | "Soup"
-  | "Salad"
-  | "Appetizer"
-  | "Breakfast"
-  | "Lunch"
-  | "Snack"
-  | "Dinner"
+const FAVORITES_MEAL_FILTERS = [
+  "All",
+  "Appetizer",
+  "Breakfast",
+  "Lunch",
+  "Dinner",
+  "Finger Food",
+  "Kids Lunch Box",
+  "Snack",
+  "Soup",
+  "Salad",
+  "Dessert",
+] as const
+
+type MealFilter = (typeof FAVORITES_MEAL_FILTERS)[number]
 
 function normalizeMealType(v: string | null | undefined): string {
   return (v ?? "").trim()
 }
 
+function mealTypeMatchesFilter(mealType: string | null | undefined, filter: MealFilter): boolean {
+  if (filter === "All") return true
+  const mt = normalizeMealType(mealType).toLowerCase()
+  const ft = filter.toLowerCase()
+  if (ft === "appetizer" && (mt === "appetizer" || mt === "starter")) return true
+  if (ft === "kids lunch box" && (mt === "kids lunch box" || mt === "kids lunch")) return true
+  return mt === ft
+}
+
 function asPlannerRecipe(recipeJson: any) {
   return recipeJson as any
+}
+
+function FavoritesMealFilterBar({
+  value,
+  onChange,
+}: {
+  value: MealFilter
+  onChange: (filter: MealFilter) => void
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const dragRef = useRef({ active: false, moved: false, startX: 0, startScroll: 0 })
+
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+
+    const onWheel = (e: WheelEvent) => {
+      if (el.scrollWidth <= el.clientWidth + 1) return
+      const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY
+      if (delta === 0) return
+      e.preventDefault()
+      e.stopPropagation()
+      el.scrollLeft += delta
+    }
+
+    const onPointerDown = (e: PointerEvent) => {
+      if (e.button !== 0) return
+      dragRef.current = {
+        active: true,
+        moved: false,
+        startX: e.clientX,
+        startScroll: el.scrollLeft,
+      }
+    }
+
+    const onPointerMove = (e: PointerEvent) => {
+      if (!dragRef.current.active) return
+      const dx = e.clientX - dragRef.current.startX
+      if (Math.abs(dx) > 4) {
+        dragRef.current.moved = true
+        el.scrollLeft = dragRef.current.startScroll - dx
+      }
+    }
+
+    const endPointer = () => {
+      dragRef.current.active = false
+    }
+
+    el.addEventListener("wheel", onWheel, { passive: false, capture: true })
+    el.addEventListener("pointerdown", onPointerDown)
+    document.addEventListener("pointermove", onPointerMove)
+    document.addEventListener("pointerup", endPointer)
+    document.addEventListener("pointercancel", endPointer)
+
+    return () => {
+      el.removeEventListener("wheel", onWheel, { capture: true })
+      el.removeEventListener("pointerdown", onPointerDown)
+      document.removeEventListener("pointermove", onPointerMove)
+      document.removeEventListener("pointerup", endPointer)
+      document.removeEventListener("pointercancel", endPointer)
+    }
+  }, [])
+
+  return (
+    <div className="min-w-0 flex-1 overflow-hidden rounded-xl border border-[#E2D9CC] bg-white px-1 py-1 sm:px-1.5">
+      <div
+        ref={scrollRef}
+        className="scrollbar-hide w-full min-w-0 max-w-full cursor-grab overflow-x-scroll overflow-y-hidden overscroll-x-contain [touch-action:pan-x] active:cursor-grabbing"
+      >
+        <div className="inline-flex w-max min-w-full flex-nowrap items-center gap-1.5 pr-1">
+          {FAVORITES_MEAL_FILTERS.map((f) => (
+            <button
+              key={f}
+              type="button"
+              onClick={() => {
+                if (dragRef.current.moved) {
+                  dragRef.current.moved = false
+                  return
+                }
+                onChange(f)
+              }}
+              className={cn(
+                "shrink-0 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-[11px] font-semibold leading-none transition sm:px-3 sm:py-2 sm:text-xs",
+                value === f ? "bg-[#FDE9DD] text-[#EA6A12]" : "text-[#1F3A2B]/70 hover:bg-[#FAF7F0] hover:text-[#1F3A2B]"
+              )}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function FavoriteSkeletonGrid() {
@@ -464,13 +572,7 @@ export default function FavoritesPage() {
   const filtered = useMemo(() => {
     const list = favorites ?? []
     const q = query.trim().toLowerCase()
-    const byMeal = (f: FavoriteDto) => {
-      if (mealFilter === "All") return true
-      const mt = normalizeMealType(f.mealType).toLowerCase()
-      const ft = mealFilter.toLowerCase()
-      if (ft === "appetizer" && (mt === "appetizer" || mt === "starter")) return true
-      return mt === ft
-    }
+    const byMeal = (f: FavoriteDto) => mealTypeMatchesFilter(f.mealType, mealFilter)
     const byQuery = (f: FavoriteDto) => {
       if (!q) return true
       const hay = `${f.title} ${f.mainIngredients ?? ""}`.toLowerCase()
@@ -485,17 +587,6 @@ export default function FavoritesPage() {
       setExpandedMobileId(null)
     }
   }, [filtered, expandedMobileId])
-
-  const mealFilters: MealFilter[] = [
-    "All",
-    "Soup",
-    "Salad",
-    "Appetizer",
-    "Breakfast",
-    "Lunch",
-    "Snack",
-    "Dinner",
-  ]
 
   const countLabel = `${filtered.length} recipe${filtered.length === 1 ? "" : "s"}`
 
@@ -546,23 +637,7 @@ export default function FavoritesPage() {
               />
             </div>
 
-            <div className="min-w-0 flex-1 rounded-xl border border-[#E2D9CC] bg-white px-1 py-0.5 sm:px-1.5 sm:py-1">
-              <div className="grid w-full min-w-0 grid-cols-4 gap-x-1.5 gap-y-1 sm:grid-cols-8 sm:gap-x-2 sm:gap-y-0">
-                {mealFilters.map((f) => (
-                  <button
-                    key={f}
-                    type="button"
-                    onClick={() => setMealFilter(f)}
-                    className={cn(
-                      "min-w-0 rounded-md px-1 py-1 text-center text-[10px] font-semibold leading-none transition sm:rounded-lg sm:px-1.5 sm:py-1 sm:text-xs",
-                      mealFilter === f ? "bg-[#FDE9DD] text-[#EA6A12]" : "text-[#1F3A2B]/70 hover:text-[#1F3A2B]"
-                    )}
-                  >
-                    {f}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <FavoritesMealFilterBar value={mealFilter} onChange={setMealFilter} />
           </div>
 
           {loadError ? (

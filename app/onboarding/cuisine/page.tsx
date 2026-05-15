@@ -55,7 +55,7 @@ export default function CuisineOnboardingPage() {
           <div className="grid h-7 w-7 place-items-center rounded-full bg-[#FDE9DD] text-[#F97316]">
             <Leaf className="h-4 w-4" aria-hidden />
           </div>
-          <span className="font-serif text-xl font-semibold">Daily Meal Decider</span>
+          <span className="font-serif text-xl font-semibold">Fridge To Meals</span>
         </div>
 
         <div className="mt-4 grid grid-cols-3 items-start gap-3 text-xs text-[#1F3A2B]/60">

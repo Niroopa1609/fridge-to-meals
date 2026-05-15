@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin"
 import { hashPassword } from "@/lib/server/password"
 import { toTitleCaseWords } from "@/lib/server/name-normalize"
 import { issueSession } from "@/lib/server/auth-session"
+import { sendWelcomeEmail } from "@/lib/server/mail"
 
 export const runtime = "nodejs"
 
@@ -48,6 +49,10 @@ export async function POST(req: Request) {
         { status: 400 }
       )
     }
+    void sendWelcomeEmail(String(inserted.email), String(inserted.name)).catch((e) => {
+      console.error("[signup] welcome email failed", e)
+    })
+
     const ua = req.headers.get("user-agent")
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null
     const session = await issueSession(

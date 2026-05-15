@@ -208,24 +208,44 @@ export function MyFridgePage() {
     }
   }, [])
 
-  const addSelectedImages = useCallback((incoming: File[]) => {
+  const clearSelectedImages = useCallback(() => {
     setSelectedImages((prev) => {
+      for (const im of prev) {
+        URL.revokeObjectURL(im.previewUrl)
+      }
+      return []
+    })
+    if (fileInputRef.current) fileInputRef.current.value = ""
+  }, [])
+
+  const addSelectedImages = useCallback((incoming: File[]) => {
+    if (incoming.length === 0) return
+    setSelectedImages((prev) => {
+      const remaining = MAX_UPLOAD_IMAGES - prev.length
+      if (remaining <= 0) {
+        toast.message(`You can upload at most ${MAX_UPLOAD_IMAGES} images at a time.`)
+        return prev
+      }
       const next = [...prev]
+      let rejectedOverLimit = 0
       for (const f of incoming) {
+        if (next.length >= MAX_UPLOAD_IMAGES) {
+          rejectedOverLimit++
+          continue
+        }
         const err = validateImageFile(f)
         if (err) {
           toast.error(err)
           continue
-        }
-        if (next.length >= MAX_UPLOAD_IMAGES) {
-          toast.message(`You can upload at most ${MAX_UPLOAD_IMAGES} images at a time.`)
-          break
         }
         next.push({
           id: crypto.randomUUID(),
           file: f,
           previewUrl: URL.createObjectURL(f),
         })
+      }
+      if (rejectedOverLimit > 0) {
+        toast.message(`Only ${MAX_UPLOAD_IMAGES} images allowed. Extra file(s) were not added.`)
       }
       return next
     })
@@ -445,6 +465,7 @@ export function MyFridgePage() {
       const payload = detectedIngredients.map((r) => ({ name: r.name, category: r.category }))
       const { added } = await addFridgeItems(accessToken, payload)
       await reloadSaved()
+      clearSelectedImages()
       if (added > 0) {
         setDetectedIngredients([])
         setDetectionError(null)
@@ -458,6 +479,7 @@ export function MyFridgePage() {
   }
 
   const saveableCount = detectedIngredients.length
+  const canAddMoreImages = selectedImages.length < MAX_UPLOAD_IMAGES
 
   return (
     <div className="relative min-h-screen bg-[#F7F3EB] pb-24">
@@ -535,14 +557,17 @@ export function MyFridgePage() {
                       </button>
                     </div>
                   ))}
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="flex h-24 w-24 shrink-0 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-[#E2D9CC] bg-[#F7F3EB]/80 text-[#1F3A2B]/60 transition hover:border-[#F97316]/50 hover:text-[#1F3A2B] sm:h-28 sm:w-28"
-                  >
-                    <Plus className="h-6 w-6" />
-                    <span className="text-[10px] font-semibold sm:text-xs">Add</span>
-                  </button>
+                  {canAddMoreImages ? (
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="flex h-24 w-24 shrink-0 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-[#E2D9CC] bg-[#F7F3EB]/80 text-[#1F3A2B]/60 transition hover:border-[#F97316]/50 hover:text-[#1F3A2B] sm:h-28 sm:w-28"
+                      aria-label="Add image"
+                    >
+                      <Plus className="h-6 w-6" />
+                      <span className="text-[10px] font-semibold sm:text-xs">Add</span>
+                    </button>
+                  ) : null}
                 </div>
               </div>
 
@@ -679,7 +704,7 @@ export function MyFridgePage() {
               <p className="mb-3 text-sm text-red-700">{loadSavedError}</p>
             ) : null}
 
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3 sm:grid-cols-3 lg:grid-cols-6">
               {CATEGORY_ORDER.map((cat) => {
                 const Icon = categoryIcon(cat)
                 const selected = selectedCategory === cat
@@ -693,15 +718,21 @@ export function MyFridgePage() {
                     }}
                     aria-pressed={selected}
                     className={cn(
-                      "flex flex-col items-center rounded-xl border px-3 py-3 text-center shadow-sm transition-colors duration-200 ease-out",
+                      "flex min-w-0 flex-col items-center rounded-lg border px-1.5 py-2 text-center shadow-sm transition-colors duration-200 ease-out sm:rounded-xl sm:px-3 sm:py-3",
                       selected
                         ? "border-[#4F6B1F] bg-[#E8F4DC] ring-2 ring-[#4F6B1F]/20"
                         : "border-[#E2D9CC] bg-[#F7F3EB]/60 hover:border-[#C9B99A] hover:bg-[#F2EDE3]"
                     )}
                   >
-                    <Icon className="mb-1 h-5 w-5 text-[#4F6B1F]" strokeWidth={2} aria-hidden />
-                    <p className="text-[11px] font-semibold text-[#1F3A2B] sm:text-xs">{cat}</p>
-                    <p className="text-lg font-bold text-[#1F3A2B]">{counts[cat]}</p>
+                    <Icon
+                      className="mb-0.5 h-4 w-4 text-[#4F6B1F] sm:mb-1 sm:h-5 sm:w-5"
+                      strokeWidth={2}
+                      aria-hidden
+                    />
+                    <p className="w-full truncate text-[10px] font-semibold leading-tight text-[#1F3A2B] sm:text-xs">
+                      {cat}
+                    </p>
+                    <p className="text-sm font-bold text-[#1F3A2B] sm:text-lg">{counts[cat]}</p>
                   </button>
                 )
               })}
