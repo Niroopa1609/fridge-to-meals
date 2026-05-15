@@ -3,13 +3,15 @@ import { apiFetch } from "@/lib/api"
 
 export async function generateRecipes(
   payload: RecipeGeneratorPayload,
-  requestId: string
+  requestId: string,
+  signal?: AbortSignal
 ): Promise<GenerateRecipesResponse> {
   const { res: response } = await apiFetch("/api/recipes/generate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
     requestId,
+    signal,
     safeLogFields: {
       ingredientsCount: Array.isArray(payload.ingredients) ? payload.ingredients.length : 0,
       mealTypeCount: Array.isArray(payload.mealTypes) ? payload.mealTypes.length : 0,

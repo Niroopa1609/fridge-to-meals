@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { ArrowRight, Menu, Sparkles } from "lucide-react"
+import { ArrowRight, Menu, Sparkles, Square } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Header } from "@/components/header"
 import { IngredientInput } from "@/components/ingredient-input"
@@ -30,8 +30,9 @@ export function RecipeGeneratorPage() {
     recipes,
     isLoading,
     showRecipes,
-    canGenerate,
+    canStartGenerate,
     generate,
+    cancelGenerate,
   } = useRecipeGenerator()
 
   const [expandedRecipeId, setExpandedRecipeId] = useState<string | null>(null)
@@ -161,27 +162,46 @@ export function RecipeGeneratorPage() {
           />
 
           <div className="flex w-full min-w-0 max-w-full justify-center pt-0.5">
+            <div className="flex w-full max-w-full min-w-0 items-center gap-2 rounded-2xl bg-gradient-to-r from-[#F97316] via-[#F97316] to-[#FBBF77] px-3 py-2.5 text-white shadow-[0_10px_28px_-10px_rgba(249,115,22,0.4)] sm:gap-2.5 sm:px-4 sm:py-3 md:py-3.5">
             <button
               type="button"
               onClick={() => {
+                if (isLoading) return
                 setExpandedRecipeId(null)
                 setShowRecipeDetail(false)
                 generate()
               }}
-              disabled={!canGenerate}
-              className="flex w-full max-w-full min-w-0 items-center gap-2.5 rounded-2xl bg-gradient-to-r from-[#F97316] via-[#F97316] to-[#FBBF77] px-3 py-2.5 text-left text-white shadow-[0_10px_28px_-10px_rgba(249,115,22,0.4)] transition-all duration-200 hover:scale-[1.01] hover:shadow-[0_12px_32px_-10px_rgba(249,115,22,0.48)] disabled:pointer-events-none disabled:opacity-60 disabled:hover:scale-100 sm:gap-3 sm:px-4 sm:py-3 md:py-3.5"
+              disabled={!canStartGenerate || isLoading}
+              className="flex min-w-0 flex-1 items-center gap-2.5 text-left transition-all duration-200 enabled:hover:opacity-95 disabled:cursor-default disabled:opacity-100 sm:gap-3"
             >
               <Sparkles className="h-5 w-5 shrink-0 text-white drop-shadow sm:h-6 sm:w-6" strokeWidth={2} />
               <div className="min-w-0 flex-1 space-y-0.5">
                 <p className="text-base font-bold leading-tight sm:text-lg md:text-xl">
                   {isLoading ? "Generating..." : "Generate Recipes"}
                 </p>
-                <p className="text-[10px] font-medium text-white/95 sm:text-xs">Let AI work its magic ✨</p>
+                <p className="text-[10px] font-medium text-white/95 sm:text-xs">
+                  {isLoading ? "Tap stop to cancel" : "Let AI work its magic ✨"}
+                </p>
               </div>
-              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white shadow-[0_3px_12px_rgba(0,0,0,0.1)] transition-all duration-200 sm:h-10 sm:w-10">
+            </button>
+            {isLoading ? (
+              <button
+                type="button"
+                onClick={cancelGenerate}
+                aria-label="Stop generating recipes"
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[#F97316] shadow-[0_3px_12px_rgba(0,0,0,0.1)] transition-all duration-200 hover:scale-[1.04] hover:shadow-[0_4px_14px_rgba(0,0,0,0.12)] sm:h-10 sm:w-10"
+              >
+                <Square className="h-4 w-4 fill-current sm:h-[1.15rem] sm:w-[1.15rem]" strokeWidth={0} aria-hidden />
+              </button>
+            ) : (
+              <span
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white shadow-[0_3px_12px_rgba(0,0,0,0.1)] sm:h-10 sm:w-10"
+                aria-hidden
+              >
                 <ArrowRight className="h-4 w-4 text-[#F97316] sm:h-5 sm:w-5" strokeWidth={2.5} />
               </span>
-            </button>
+            )}
+            </div>
           </div>
         </div>
 

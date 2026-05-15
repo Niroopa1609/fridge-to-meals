@@ -29,7 +29,7 @@ export function MealTypeSelector({ selectedTypes, onSelectedTypesChange }: MealT
         </h2>
       </div>
 
-      <div className="flex w-full min-w-0 justify-between gap-0.5 overflow-x-hidden sm:gap-1 md:gap-1.5">
+      <div className="grid w-full min-w-0 grid-cols-5 gap-1 sm:gap-1.5 md:flex md:flex-nowrap md:justify-between md:gap-1.5 md:overflow-visible lg:gap-2">
         {MEAL_TYPES.map((type) => {
           const selected = selectedTypes.includes(type.id)
           return (
@@ -39,7 +39,7 @@ export function MealTypeSelector({ selectedTypes, onSelectedTypesChange }: MealT
               onClick={() => toggleType(type.id)}
               aria-pressed={selected}
               className={cn(
-                "relative flex min-h-0 min-w-0 flex-1 flex-col items-center justify-center rounded-2xl border px-0.5 py-1 transition-all duration-200 sm:px-0.5 sm:py-1.5 md:py-2",
+                "relative flex min-h-[3.5rem] min-w-0 flex-col items-center justify-center gap-0.5 rounded-2xl border px-1 py-1.5 transition-all duration-200 sm:min-h-[3.75rem] sm:gap-1 sm:px-1 sm:py-2 md:min-h-[4rem] md:flex-1 md:py-2 lg:min-h-[4.25rem]",
                 "hover:scale-[1.02] hover:shadow-[0_6px_16px_-6px_rgba(47,74,22,0.12)]",
                 selected
                   ? "border-[#F97316] bg-[#FFF4EC] text-[#EA6A12] shadow-[0_4px_14px_-4px_rgba(249,115,22,0.25)]"
@@ -48,21 +48,18 @@ export function MealTypeSelector({ selectedTypes, onSelectedTypesChange }: MealT
             >
               {selected ? (
                 <span
-                  className="absolute right-0.5 top-0.5 inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-[#F97316] text-white shadow-sm sm:right-1 sm:top-1 sm:h-4 sm:w-4 md:h-5 md:w-5"
+                  className="absolute right-0.5 top-0.5 inline-flex h-3 w-3 items-center justify-center rounded-full bg-[#F97316] text-white shadow-sm sm:h-3.5 sm:w-3.5 md:right-1 md:top-1 md:h-4 md:w-4"
                   aria-hidden
                 >
-                  <Heart className="h-2 w-2 fill-white text-white sm:h-2.5 sm:w-2.5" strokeWidth={2} />
+                  <Heart className="h-1.5 w-1.5 fill-white text-white sm:h-2 sm:w-2" strokeWidth={2} />
                 </span>
               ) : null}
-              <span
-                className="mb-0 text-sm leading-none sm:text-base md:text-lg"
-                aria-hidden
-              >
+              <span className="text-lg leading-none sm:text-xl md:text-2xl" aria-hidden>
                 {type.emoji}
               </span>
               <span
                 className={cn(
-                  "w-full min-w-0 max-w-full break-words text-center text-[7px] font-semibold leading-[1.05] line-clamp-2 sm:text-[8px] md:text-[9px] lg:text-[10px]",
+                  "w-full min-w-0 max-w-full px-0.5 text-center text-[9px] font-semibold leading-tight line-clamp-2 sm:text-[10px] md:text-[11px] lg:text-xs",
                   selected ? "text-[#EA6A12]" : "text-[#1F3A2B]"
                 )}
               >

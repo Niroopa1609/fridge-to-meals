@@ -1,7 +1,8 @@
 "use client"
 
-import { useCallback, useMemo, useRef, useState } from "react"
-import { Mic, Refrigerator, Search, X } from "lucide-react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import Image from "next/image"
+import { Mic, Plus, Refrigerator, Search, X } from "lucide-react"
 import { useIngredientVoiceInput } from "@/hooks/use-ingredient-voice-input"
 import { useAuth } from "@/features/auth/context/auth-context"
 import {
@@ -12,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
 interface IngredientInputProps {
   ingredients: string[]
@@ -24,12 +26,17 @@ const QUICK_CHIPS: { emoji: string; value: string }[] = [
   { emoji: "🥚", value: "Eggs" },
   { emoji: "🍗", value: "Chicken" },
   { emoji: "🐟", value: "Fish" },
+  { emoji: "🫘", value: "Tofu" },
+  { emoji: "🦐", value: "Shrimp" },
   { emoji: "🍚", value: "Rice" },
   { emoji: "🌾", value: "Oats" },
   { emoji: "🍞", value: "Bread" },
   { emoji: "🍝", value: "Pasta" },
+  { emoji: "🍜", value: "Noodles" },
   { emoji: "🫑", value: "Capsicum" },
   { emoji: "🌽", value: "Corn" },
+  { emoji: "🥬", value: "Spinach" },
+  { emoji: "🍄", value: "Mushroom" },
 ]
 
 function normalizeIngredientKey(value: string): string {
@@ -46,6 +53,7 @@ const SUGGESTED_INGREDIENTS = [
   "Onion",
   "Tomato",
   "Pasta",
+  "Noodles",
   "Beans",
   "Carrot",
   "Potato",
@@ -55,6 +63,7 @@ const SUGGESTED_INGREDIENTS = [
   "Lentils",
   "Chickpeas",
   "Tofu",
+  "Shrimp",
   "Mushroom",
   "Bell Pepper",
 ]
@@ -66,7 +75,10 @@ export function IngredientInput({
 }: IngredientInputProps) {
   const { user, isHydrated } = useAuth()
   const inputRef = useRef<HTMLInputElement>(null)
+  const chipsScrollRef = useRef<HTMLDivElement>(null)
+  const chipsDragRef = useRef({ active: false, moved: false, startX: 0, startScroll: 0 })
   const [inputValue, setInputValue] = useState("")
+  const [chipsCanScroll, setChipsCanScroll] = useState(false)
   const [isSuggestOpen, setIsSuggestOpen] = useState(false)
   const [fridgeDialogOpen, setFridgeDialogOpen] = useState(false)
   const [fridgeModalSelected, setFridgeModalSelected] = useState<Set<string>>(new Set())
@@ -181,6 +193,90 @@ export function IngredientInput({
           return s.toLowerCase().includes(q) && !alreadySelected
         }).slice(0, 8)
 
+  const updateChipsCanScroll = useCallback(() => {
+    const el = chipsScrollRef.current
+    if (!el) return
+    setChipsCanScroll(el.scrollWidth > el.clientWidth + 2)
+  }, [])
+
+  useEffect(() => {
+    const el = chipsScrollRef.current
+    if (!el) return
+
+    const measure = () => {
+      updateChipsCanScroll()
+    }
+    measure()
+    const raf = requestAnimationFrame(measure)
+
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    const inner = el.firstElementChild
+    if (inner) ro.observe(inner)
+
+    const onWheel = (e: WheelEvent) => {
+      if (el.scrollWidth <= el.clientWidth + 1) return
+      const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY
+      if (delta === 0) return
+      e.preventDefault()
+      e.stopPropagation()
+      el.scrollLeft += delta
+    }
+
+    const onPointerDown = (e: PointerEvent) => {
+      if (e.button !== 0) return
+      chipsDragRef.current = {
+        active: true,
+        moved: false,
+        startX: e.clientX,
+        startScroll: el.scrollLeft,
+      }
+    }
+
+    const onPointerMove = (e: PointerEvent) => {
+      if (!chipsDragRef.current.active) return
+      const dx = e.clientX - chipsDragRef.current.startX
+      if (Math.abs(dx) > 4) {
+        chipsDragRef.current.moved = true
+        el.scrollLeft = chipsDragRef.current.startScroll - dx
+      }
+    }
+
+    const endPointer = () => {
+      chipsDragRef.current.active = false
+    }
+
+    el.addEventListener("wheel", onWheel, { passive: false, capture: true })
+    el.addEventListener("pointerdown", onPointerDown)
+    document.addEventListener("pointermove", onPointerMove)
+    document.addEventListener("pointerup", endPointer)
+    document.addEventListener("pointercancel", endPointer)
+    el.addEventListener("scroll", measure)
+    window.addEventListener("resize", measure)
+
+    return () => {
+      cancelAnimationFrame(raf)
+      ro.disconnect()
+      el.removeEventListener("wheel", onWheel, { capture: true })
+      el.removeEventListener("pointerdown", onPointerDown)
+      document.removeEventListener("pointermove", onPointerMove)
+      document.removeEventListener("pointerup", endPointer)
+      document.removeEventListener("pointercancel", endPointer)
+      el.removeEventListener("scroll", measure)
+      window.removeEventListener("resize", measure)
+    }
+  }, [updateChipsCanScroll])
+
+  const handleQuickChipClick = (value: string) => {
+    if (chipsDragRef.current.moved) {
+      chipsDragRef.current.moved = false
+      return
+    }
+    addIngredients([value])
+    setInputValue("")
+    setIsSuggestOpen(false)
+  }
+
   return (
     <section className="w-full max-w-full min-w-0 border-b border-[#E6E0D4]/40 pb-3 sm:pb-4">
       <div className="mb-2 flex flex-wrap items-start gap-2 sm:mb-2.5">
@@ -197,32 +293,38 @@ export function IngredientInput({
         </div>
       </div>
 
-      <div className="mb-2 flex w-full min-w-0 flex-wrap justify-between gap-x-1 gap-y-1.5 sm:mb-2.5 sm:gap-x-2 md:gap-x-2.5">
-        {QUICK_CHIPS.map(({ emoji, value }) => (
-          <button
-            key={value}
-            type="button"
-            onClick={() => {
-              addIngredients([value])
-              setInputValue("")
-              setIsSuggestOpen(false)
-            }}
-            className="inline-flex min-w-0 shrink-0 items-center gap-1 rounded-full border border-[#E4DDCF] bg-white px-2 py-1 text-[10px] font-semibold text-[#1F3A2B] shadow-[0_2px_8px_-2px_rgba(47,74,22,0.08)] transition-all duration-200 hover:scale-[1.02] hover:border-[#F97316]/35 hover:shadow-[0_4px_12px_-2px_rgba(249,115,22,0.15)] sm:px-2.5 sm:text-xs"
-          >
-            <span className="text-sm leading-none sm:text-base" aria-hidden>
-              {emoji}
-            </span>
-            {value}
-          </button>
-        ))}
+      <div className="mb-2 w-full min-w-0 sm:mb-2.5">
+        <div
+          ref={chipsScrollRef}
+          className={cn(
+            "w-full min-w-0 max-w-full overflow-x-auto overflow-y-hidden overscroll-x-contain pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [touch-action:pan-x] [&::-webkit-scrollbar]:hidden",
+            chipsCanScroll && "cursor-grab select-none active:cursor-grabbing"
+          )}
+        >
+        <div className="inline-flex w-max flex-nowrap items-center gap-2 pr-1">
+          {QUICK_CHIPS.map(({ emoji, value }) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => handleQuickChipClick(value)}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#E4DDCF] bg-white px-2.5 py-1 text-[10px] font-semibold text-[#1F3A2B] shadow-[0_2px_8px_-2px_rgba(47,74,22,0.08)] transition-all duration-200 hover:scale-[1.02] hover:border-[#F97316]/35 hover:shadow-[0_4px_12px_-2px_rgba(249,115,22,0.15)] sm:px-3 sm:text-xs"
+            >
+              <span className="text-sm leading-none sm:text-base" aria-hidden>
+                {emoji}
+              </span>
+              {value}
+            </button>
+          ))}
+        </div>
+        </div>
       </div>
 
-      <div className="flex w-full max-w-full min-w-0 flex-col gap-2 md:flex-row md:items-stretch md:gap-2">
+      <div className="flex w-full max-w-full min-w-0 flex-nowrap items-stretch gap-2">
         <div className="relative min-w-0 flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 z-[1] h-4 w-4 -translate-y-1/2 text-[#1F3A2B]/35 sm:left-3.5 sm:h-[1.05rem] sm:w-[1.05rem]" />
 
           <div
-            className="relative flex min-h-[2.625rem] w-full min-w-0 max-w-full flex-wrap items-center gap-1 rounded-xl border border-[#E6E0D4]/90 bg-white py-1.5 pl-10 pr-1.5 text-sm text-[#1F3A2B] shadow-[0_2px_10px_-4px_rgba(47,74,22,0.08)] transition-all duration-200 focus-within:border-[#F97316]/55 focus-within:shadow-[0_4px_14px_-4px_rgba(249,115,22,0.18)] focus-within:ring-2 focus-within:ring-[#F97316]/12 sm:min-h-[2.75rem] sm:gap-1.5 sm:py-2 sm:pl-11 sm:pr-2 md:pr-12"
+            className="relative flex min-h-[2.625rem] w-full min-w-0 max-w-full flex-wrap items-center gap-1 rounded-xl border border-[#E6E0D4]/90 bg-white py-1.5 pl-10 pr-11 text-sm text-[#1F3A2B] shadow-[0_2px_10px_-4px_rgba(47,74,22,0.08)] transition-all duration-200 focus-within:border-[#F97316]/55 focus-within:shadow-[0_4px_14px_-4px_rgba(249,115,22,0.18)] focus-within:ring-2 focus-within:ring-[#F97316]/12 sm:min-h-[2.75rem] sm:gap-1.5 sm:py-2 sm:pl-11 sm:pr-12"
             onMouseDown={() => setIsSuggestOpen(true)}
           >
             {ingredients.map((ingredient) => (
@@ -267,7 +369,7 @@ export function IngredientInput({
                   : "Voice input"
               }
               aria-pressed={voiceUi.phase === "web_listening" || voiceUi.phase === "media_recording"}
-              className={`absolute right-1.5 top-1/2 z-[2] hidden h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg border-2 border-transparent text-[#1F3A2B]/45 transition-all duration-200 hover:bg-[#FAF7F0] hover:text-[#1F3A2B] disabled:pointer-events-none disabled:opacity-50 md:inline-flex ${
+              className={`absolute right-1.5 top-1/2 z-[2] inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg border-2 border-transparent text-[#1F3A2B]/45 transition-all duration-200 hover:bg-[#FAF7F0] hover:text-[#1F3A2B] disabled:pointer-events-none disabled:opacity-50 ${
                 voiceUi.phase === "web_listening" || voiceUi.phase === "media_recording"
                   ? "border-[#F97316] text-[#F97316] ring-2 ring-[#F97316]/25"
                   : ""
@@ -299,39 +401,29 @@ export function IngredientInput({
           )}
         </div>
 
-        <div className="flex w-full max-w-full shrink-0 items-center justify-center gap-2 md:w-auto md:justify-end">
+        <div className="flex shrink-0 items-center gap-1.5 self-center">
+          <button
+            type="button"
+            onClick={handleAddFromInput}
+            disabled={!inputValue.trim()}
+            aria-label="Add typed ingredients"
+            className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-[#F97316]/35 bg-white text-[#F97316] shadow-[0_1px_4px_-1px_rgba(249,115,22,0.2)] transition-all duration-200 hover:border-[#F97316]/55 hover:bg-[#FFF7ED] disabled:pointer-events-none disabled:opacity-40 sm:h-8 sm:w-8"
+          >
+            <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" strokeWidth={2.25} aria-hidden />
+          </button>
           <button
             type="button"
             onClick={handleFridgeAddButtonClick}
             aria-label="Add from your fridge"
-            className="inline-flex h-9 min-w-[2.5rem] shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-[#F97316] to-[#F28C38] px-3 text-white shadow-[0_4px_14px_-4px_rgba(249,115,22,0.5)] transition-all duration-200 hover:scale-[1.02] hover:shadow-[0_6px_18px_-4px_rgba(249,115,22,0.55)] md:h-10 md:min-w-[2.75rem]"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-2xl shadow-[0_3px_12px_-3px_rgba(47,74,22,0.18)] transition-all duration-200 hover:scale-[1.03] hover:shadow-[0_5px_16px_-3px_rgba(47,74,22,0.22)] sm:h-11 sm:w-11"
           >
-            <Refrigerator className="h-4 w-4 text-white sm:h-[1.15rem] sm:w-[1.15rem]" strokeWidth={2.25} />
-          </button>
-          <button
-            type="button"
-            onClick={handleMicClick}
-            disabled={voiceUi.isMicBusy}
-            aria-label={
-              voiceUi.phase === "web_listening" || voiceUi.phase === "media_recording"
-                ? "Stop voice input"
-                : "Voice input"
-            }
-            aria-pressed={voiceUi.phase === "web_listening" || voiceUi.phase === "media_recording"}
-            className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[#E6E0D4]/90 bg-white text-[#1F3A2B]/70 shadow-[0_2px_8px_-2px_rgba(47,74,22,0.08)] transition-all duration-200 hover:scale-[1.02] hover:bg-[#FAF7F0] hover:text-[#2F4A16] disabled:pointer-events-none disabled:opacity-50 md:hidden ${
-              voiceUi.phase === "web_listening" || voiceUi.phase === "media_recording"
-                ? "border-[#F97316] ring-2 ring-[#F97316]/25"
-                : ""
-            }`}
-          >
-            <Mic className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={handleAddFromInput}
-            className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-[#F97316] to-[#F28C38] px-3.5 text-xs font-bold text-white shadow-[0_4px_14px_-4px_rgba(249,115,22,0.45)] transition-all duration-200 hover:scale-[1.02] hover:shadow-[0_6px_18px_-4px_rgba(249,115,22,0.52)] disabled:pointer-events-none disabled:opacity-50 disabled:hover:scale-100 md:h-10 md:px-5 md:text-sm"
-          >
-            + Add
+            <Image
+              src="/recipe-generator/fridge-icon.png"
+              alt=""
+              width={44}
+              height={44}
+              className="h-full w-full rounded-2xl object-cover"
+            />
           </button>
         </div>
       </div>

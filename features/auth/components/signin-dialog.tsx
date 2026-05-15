@@ -45,13 +45,14 @@ export function SignInDialog({
         <DialogHeader>
           <DialogTitle className="font-serif text-[#1F3A2B]">Sign In</DialogTitle>
           {preface ? (
-            <p className="text-sm font-medium text-[#1F3A2B]" role="note">
+            <DialogDescription className="text-sm font-medium text-[#1F3A2B]">
               {preface}
-            </p>
-          ) : null}
-          <DialogDescription className="text-[#1F3A2B]/60">
-            Sign in to save recipes, track your fridge, and get daily meal picks.
-          </DialogDescription>
+            </DialogDescription>
+          ) : (
+            <DialogDescription className="text-[#1F3A2B]/60">
+              Sign in to save recipes, track your fridge, and get daily meal picks.
+            </DialogDescription>
+          )}
         </DialogHeader>
 
         <div className="space-y-3">
@@ -61,7 +62,7 @@ export function SignInDialog({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="user@example.com"
-              className="border-[#E2D9CC] bg-white"
+              className="border-[#E2D9CC] bg-white placeholder:text-[#1F3A2B]/35"
               type="email"
             />
           </div>
@@ -71,7 +72,7 @@ export function SignInDialog({
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="border-[#E2D9CC] bg-white"
+              className="border-[#E2D9CC] bg-white placeholder:text-[#1F3A2B]/35"
               type="password"
               onKeyDown={(e) => {
                 if (e.key === "Enter") submit()
