@@ -1,7 +1,7 @@
 "use client"
 
-import { useCallback, useMemo, useState } from "react"
-import { Search, Mic, X } from "lucide-react"
+import { useCallback, useMemo, useRef, useState } from "react"
+import { Mic, Refrigerator, Search, X } from "lucide-react"
 import { useIngredientVoiceInput } from "@/hooks/use-ingredient-voice-input"
 import { useAuth } from "@/features/auth/context/auth-context"
 import {
@@ -19,41 +19,21 @@ interface IngredientInputProps {
   fridgeQuickPicks?: string[]
 }
 
-const QUICK_PICKS = [
-  "Chicken",
-  "Eggs",
-  "Paneer",
-  "Rice",
-  "Spinach",
-  "Broccoli",
-  "Onion",
-  "Tomato",
-  "Pasta",
-  "Beans",
+/** Colorful quick chips (reference layout) */
+const QUICK_CHIPS: { emoji: string; value: string }[] = [
+  { emoji: "🥚", value: "Eggs" },
+  { emoji: "🍗", value: "Chicken" },
+  { emoji: "🐟", value: "Fish" },
+  { emoji: "🍚", value: "Rice" },
+  { emoji: "🌾", value: "Oats" },
+  { emoji: "🍞", value: "Bread" },
+  { emoji: "🍝", value: "Pasta" },
+  { emoji: "🫑", value: "Capsicum" },
+  { emoji: "🌽", value: "Corn" },
 ]
 
 function normalizeIngredientKey(value: string): string {
   return value.trim().toLowerCase()
-}
-
-function FridgeLineIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden
-    >
-      <rect x="5" y="3" width="14" height="18" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M5 9h14" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M9 5.5V7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <circle cx="9" cy="12" r="0.75" fill="currentColor" />
-      <circle cx="9" cy="15.5" r="0.75" fill="currentColor" />
-    </svg>
-  )
 }
 
 const SUGGESTED_INGREDIENTS = [
@@ -85,6 +65,7 @@ export function IngredientInput({
   fridgeQuickPicks,
 }: IngredientInputProps) {
   const { user, isHydrated } = useAuth()
+  const inputRef = useRef<HTMLInputElement>(null)
   const [inputValue, setInputValue] = useState("")
   const [isSuggestOpen, setIsSuggestOpen] = useState(false)
   const [fridgeDialogOpen, setFridgeDialogOpen] = useState(false)
@@ -136,7 +117,10 @@ export function IngredientInput({
 
   const handleAddFromInput = () => {
     const raw = inputValue
-    const parts = raw.split(",").map((p) => p.trim()).filter(Boolean)
+    const parts = raw
+      .split(",")
+      .map((p) => p.trim())
+      .filter(Boolean)
     if (parts.length === 0) {
       setIsSuggestOpen(false)
       return
@@ -198,45 +182,53 @@ export function IngredientInput({
         }).slice(0, 8)
 
   return (
-    <div className="w-full max-w-full min-w-0 space-y-3">
-      <label className="flex max-w-full flex-wrap items-baseline gap-x-2 gap-y-1 text-sm font-medium text-[#1F3A2B]">
-        <span>
-          Ingredients <span className="text-[#F97316]">*</span>
-        </span>
-        <span className="text-xs font-normal text-[#1F3A2B]/55">(Pick or add directly)</span>
-      </label>
-
-      <div className="space-y-2">
-        <div className="flex flex-wrap gap-2">
-          {QUICK_PICKS.map((pick) => (
-            <button
-              key={pick}
-              type="button"
-              onClick={() => {
-                addIngredients([pick])
-                setInputValue("")
-                setIsSuggestOpen(false)
-              }}
-              className="rounded-full border border-[#E2D9CC] bg-white px-3 py-1 text-xs font-semibold text-[#4F6B1F] hover:border-[#F97316]/50 hover:bg-[#F7F3EB]"
-            >
-              {pick}
-            </button>
-          ))}
+    <section className="w-full max-w-full min-w-0 border-b border-[#E6E0D4]/40 pb-3 sm:pb-4">
+      <div className="mb-2 flex flex-wrap items-start gap-2 sm:mb-2.5">
+        <div className="flex min-w-0 items-start gap-2">
+          <span className="inline-flex shrink-0 text-[#3D7C47]" aria-hidden>
+            <Refrigerator className="h-6 w-6 sm:h-7 sm:w-7" strokeWidth={2} />
+          </span>
+          <div className="min-w-0 space-y-0">
+            <h2 className="font-serif text-sm font-semibold text-[#1F3A2B] sm:text-base md:text-lg">
+              What&apos;s in your Fridge? <span className="text-[#F97316]">*</span>
+            </h2>
+            <p className="text-[11px] text-[#1F3A2B]/65 sm:text-xs">Add ingredients you have at home</p>
+          </div>
         </div>
       </div>
 
-      <div className="flex w-full max-w-full min-w-0 flex-col gap-2 sm:flex-row sm:items-stretch sm:gap-2">
-        <div className="relative min-w-0 w-full sm:flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 z-[1] h-4 w-4 -translate-y-1/2 text-[#1F3A2B]/40 sm:left-4 sm:h-5 sm:w-5" />
+      <div className="mb-2 flex w-full min-w-0 flex-wrap justify-between gap-x-1 gap-y-1.5 sm:mb-2.5 sm:gap-x-2 md:gap-x-2.5">
+        {QUICK_CHIPS.map(({ emoji, value }) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => {
+              addIngredients([value])
+              setInputValue("")
+              setIsSuggestOpen(false)
+            }}
+            className="inline-flex min-w-0 shrink-0 items-center gap-1 rounded-full border border-[#E4DDCF] bg-white px-2 py-1 text-[10px] font-semibold text-[#1F3A2B] shadow-[0_2px_8px_-2px_rgba(47,74,22,0.08)] transition-all duration-200 hover:scale-[1.02] hover:border-[#F97316]/35 hover:shadow-[0_4px_12px_-2px_rgba(249,115,22,0.15)] sm:px-2.5 sm:text-xs"
+          >
+            <span className="text-sm leading-none sm:text-base" aria-hidden>
+              {emoji}
+            </span>
+            {value}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex w-full max-w-full min-w-0 flex-col gap-2 md:flex-row md:items-stretch md:gap-2">
+        <div className="relative min-w-0 flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 z-[1] h-4 w-4 -translate-y-1/2 text-[#1F3A2B]/35 sm:left-3.5 sm:h-[1.05rem] sm:w-[1.05rem]" />
 
           <div
-            className="flex min-h-11 w-full min-w-0 max-w-full flex-wrap items-center gap-1.5 rounded-lg border border-[#E2D9CC] bg-white py-1.5 pl-9 pr-2 text-sm text-[#1F3A2B] shadow-sm focus-within:border-[#F97316] focus-within:ring-1 focus-within:ring-[#F97316] sm:min-h-12 sm:gap-2 sm:py-2 sm:pl-12 sm:pr-3"
+            className="relative flex min-h-[2.625rem] w-full min-w-0 max-w-full flex-wrap items-center gap-1 rounded-xl border border-[#E6E0D4]/90 bg-white py-1.5 pl-10 pr-1.5 text-sm text-[#1F3A2B] shadow-[0_2px_10px_-4px_rgba(47,74,22,0.08)] transition-all duration-200 focus-within:border-[#F97316]/55 focus-within:shadow-[0_4px_14px_-4px_rgba(249,115,22,0.18)] focus-within:ring-2 focus-within:ring-[#F97316]/12 sm:min-h-[2.75rem] sm:gap-1.5 sm:py-2 sm:pl-11 sm:pr-2 md:pr-12"
             onMouseDown={() => setIsSuggestOpen(true)}
           >
             {ingredients.map((ingredient) => (
               <span
                 key={ingredient}
-                className="inline-flex max-w-full min-w-0 shrink items-center gap-1 rounded-full bg-[#E4ECD4] px-2 py-0.5 text-xs font-semibold text-[#4F6B1F] sm:px-2.5 sm:py-1"
+                className="inline-flex max-w-full min-w-0 shrink items-center gap-1 rounded-full border border-[#D7E4BE] bg-[#E8F4DC] px-2.5 py-0.5 text-xs font-semibold text-[#2F4A16] sm:py-1"
               >
                 <span className="min-w-0 truncate">{ingredient}</span>
                 <button
@@ -251,8 +243,9 @@ export function IngredientInput({
             ))}
 
             <input
+              ref={inputRef}
               type="text"
-              placeholder={ingredients.length === 0 ? "Add ingredients..." : ""}
+              placeholder="Add or search ingredients..."
               value={inputValue}
               onChange={(e) => {
                 setInputValue(e.target.value)
@@ -261,12 +254,31 @@ export function IngredientInput({
               onKeyDown={handleKeyDown}
               onFocus={() => setIsSuggestOpen(true)}
               onBlur={() => setTimeout(() => setIsSuggestOpen(false), 150)}
-              className="min-w-0 flex-1 bg-transparent text-sm text-[#1F3A2B] placeholder:text-[#1F3A2B]/40 outline-none sm:min-w-[6rem]"
+              className="min-w-0 flex-1 bg-transparent text-sm text-[#1F3A2B] placeholder:text-[#1F3A2B]/40 outline-none"
             />
+
+            <button
+              type="button"
+              onClick={handleMicClick}
+              disabled={voiceUi.isMicBusy}
+              aria-label={
+                voiceUi.phase === "web_listening" || voiceUi.phase === "media_recording"
+                  ? "Stop voice input"
+                  : "Voice input"
+              }
+              aria-pressed={voiceUi.phase === "web_listening" || voiceUi.phase === "media_recording"}
+              className={`absolute right-1.5 top-1/2 z-[2] hidden h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg border-2 border-transparent text-[#1F3A2B]/45 transition-all duration-200 hover:bg-[#FAF7F0] hover:text-[#1F3A2B] disabled:pointer-events-none disabled:opacity-50 md:inline-flex ${
+                voiceUi.phase === "web_listening" || voiceUi.phase === "media_recording"
+                  ? "border-[#F97316] text-[#F97316] ring-2 ring-[#F97316]/25"
+                  : ""
+              }`}
+            >
+              <Mic className="h-4 w-4" />
+            </button>
           </div>
 
           {isSuggestOpen && filteredSuggestions.length > 0 && (
-            <div className="absolute left-0 right-0 top-full z-10 mt-1 max-w-full overflow-hidden rounded-lg border border-[#E2D9CC] bg-white shadow-sm">
+            <div className="absolute left-0 right-0 top-full z-10 mt-1 max-w-full overflow-hidden rounded-xl border border-[#E6E0D4]/90 bg-white shadow-[0_8px_24px_-8px_rgba(47,74,22,0.12)]">
               {filteredSuggestions.map((s) => (
                 <button
                   key={s}
@@ -277,28 +289,24 @@ export function IngredientInput({
                     setInputValue("")
                     setIsSuggestOpen(false)
                   }}
-                  className="flex w-full min-w-0 max-w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm text-[#1F3A2B] hover:bg-[#F7F3EB] sm:px-4"
+                  className="flex w-full min-w-0 max-w-full items-center justify-between gap-2 px-3 py-2.5 text-left text-sm text-[#1F3A2B] hover:bg-[#FAF7F0] sm:px-4"
                 >
                   <span className="min-w-0 truncate">{s}</span>
-                  <span className="shrink-0 text-xs font-medium text-[#4F6B1F]/70">Add</span>
+                  <span className="shrink-0 text-xs font-semibold text-[#4F6B1F]/70">Add</span>
                 </button>
               ))}
             </div>
           )}
         </div>
 
-        <div className="flex w-full max-w-full shrink-0 items-center justify-center gap-2 sm:w-auto sm:justify-start sm:self-center sm:gap-2">
+        <div className="flex w-full max-w-full shrink-0 items-center justify-center gap-2 md:w-auto md:justify-end">
           <button
             type="button"
             onClick={handleFridgeAddButtonClick}
             aria-label="Add from your fridge"
-            className="inline-flex h-9 min-h-9 shrink-0 items-center justify-center gap-1 rounded-md bg-[#F97316] px-2 py-0 text-[11px] font-semibold leading-tight text-white shadow-sm hover:bg-[#F28C38] max-[360px]:gap-0.5 max-[360px]:px-1.5 max-[360px]:text-[10px] sm:gap-1.5 sm:px-3 sm:text-sm sm:leading-none"
+            className="inline-flex h-9 min-w-[2.5rem] shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-[#F97316] to-[#F28C38] px-3 text-white shadow-[0_4px_14px_-4px_rgba(249,115,22,0.5)] transition-all duration-200 hover:scale-[1.02] hover:shadow-[0_6px_18px_-4px_rgba(249,115,22,0.55)] md:h-10 md:min-w-[2.75rem]"
           >
-            <FridgeLineIcon className="h-3.5 w-3.5 shrink-0 text-white sm:h-4 sm:w-4" />
-            <span className="min-w-0 text-left">
-              <span className="inline max-[360px]:hidden sm:inline">Add from your fridge</span>
-              <span className="hidden max-[360px]:inline sm:hidden">From fridge</span>
-            </span>
+            <Refrigerator className="h-4 w-4 text-white sm:h-[1.15rem] sm:w-[1.15rem]" strokeWidth={2.25} />
           </button>
           <button
             type="button"
@@ -310,13 +318,20 @@ export function IngredientInput({
                 : "Voice input"
             }
             aria-pressed={voiceUi.phase === "web_listening" || voiceUi.phase === "media_recording"}
-            className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border bg-white text-[#1F3A2B]/70 hover:bg-[#E4ECD4] hover:text-[#1F3A2B] disabled:pointer-events-none disabled:opacity-50 ${
+            className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[#E6E0D4]/90 bg-white text-[#1F3A2B]/70 shadow-[0_2px_8px_-2px_rgba(47,74,22,0.08)] transition-all duration-200 hover:scale-[1.02] hover:bg-[#FAF7F0] hover:text-[#2F4A16] disabled:pointer-events-none disabled:opacity-50 md:hidden ${
               voiceUi.phase === "web_listening" || voiceUi.phase === "media_recording"
-                ? "border-[#F97316] ring-1 ring-[#F97316]"
-                : "border-[#E2D9CC]"
+                ? "border-[#F97316] ring-2 ring-[#F97316]/25"
+                : ""
             }`}
           >
-            <Mic className="h-4 w-4 sm:h-5 sm:w-5" />
+            <Mic className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={handleAddFromInput}
+            className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-[#F97316] to-[#F28C38] px-3.5 text-xs font-bold text-white shadow-[0_4px_14px_-4px_rgba(249,115,22,0.45)] transition-all duration-200 hover:scale-[1.02] hover:shadow-[0_6px_18px_-4px_rgba(249,115,22,0.52)] disabled:pointer-events-none disabled:opacity-50 disabled:hover:scale-100 md:h-10 md:px-5 md:text-sm"
+          >
+            + Add
           </button>
         </div>
       </div>
@@ -384,11 +399,11 @@ export function IngredientInput({
       {(voiceUi.statusMessage || voiceUi.errorMessage) && (
         <p
           role="status"
-          className={`text-sm ${voiceUi.errorMessage ? "text-red-700" : "text-[#1F3A2B]/70"}`}
+          className={`mt-2 text-sm ${voiceUi.errorMessage ? "text-red-700" : "text-[#1F3A2B]/70"}`}
         >
           {voiceUi.errorMessage ?? voiceUi.statusMessage}
         </p>
       )}
-    </div>
+    </section>
   )
 }

@@ -462,7 +462,7 @@ export function MyFridgePage() {
   return (
     <div className="relative min-h-screen bg-[#F7F3EB] pb-24">
       <DecorativeLeaves />
-      <Header />
+      <Header variant="recipe" />
 
       <main className="mx-auto max-w-[1440px] overflow-x-hidden px-4 py-6 sm:px-6 sm:py-8 lg:px-12 xl:px-16">
         <div className="mx-auto max-w-[1200px] space-y-8">

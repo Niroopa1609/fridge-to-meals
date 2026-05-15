@@ -521,7 +521,7 @@ export default function FavoritesPage() {
   return (
     <div className="relative min-h-screen w-full min-w-0 max-w-full overflow-x-hidden bg-[#F7F3EB] pb-24">
       <DecorativeLeaves />
-      <Header />
+      <Header variant="recipe" />
 
       <main className="mx-auto w-full min-w-0 max-w-[1440px] px-4 py-6 sm:px-8 sm:py-8 lg:px-12 xl:px-16">
         <div className="mx-auto w-full min-w-0 max-w-[1100px]">

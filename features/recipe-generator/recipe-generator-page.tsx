@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Menu, Sparkles } from "lucide-react"
+import { ArrowRight, Menu, Sparkles } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Header } from "@/components/header"
 import { IngredientInput } from "@/components/ingredient-input"
@@ -9,9 +9,8 @@ import { FilterSection } from "@/components/filter-section"
 import { MealTypeSelector } from "@/components/meal-type-selector"
 import { RecipeCard, RecipePreviewCard } from "@/components/recipe-card"
 import { MobileNav } from "@/components/mobile-nav"
-import { Button } from "@/components/ui/button"
 import { useIsMobile } from "@/components/ui/use-mobile"
-import { DecorativeLeaves } from "@/features/recipe-generator/components/decorative-leaves"
+import { RecipeHeroBanner } from "@/features/recipe-generator/components/recipe-hero-banner"
 import { RecipesSection } from "@/features/recipe-generator/components/recipes-section"
 import { useRecipeGenerator } from "@/features/recipe-generator/hooks/use-recipe-generator"
 import { useAuth } from "@/features/auth/context/auth-context"
@@ -89,10 +88,10 @@ export function RecipeGeneratorPage() {
     const expandedRecipe = recipes.find((r) => r.id === expandedRecipeId)
     if (expandedRecipe) {
       return (
-        <div className="min-h-screen w-full min-w-0 max-w-full overflow-x-hidden bg-[#F7F3EB] pb-24">
+        <div className="min-h-screen w-full min-w-0 max-w-full overflow-x-hidden bg-[#F8F5EF] pb-24">
           <header
-            className="sticky top-0 z-40 grid h-14 grid-cols-[1fr_auto_1fr] items-center px-4 text-white"
-            style={{ background: "linear-gradient(to right, #3A4F16, #5C7A25)" }}
+            className="sticky top-0 z-40 grid h-14 grid-cols-[1fr_auto_1fr] items-center px-4 text-white shadow-[0_8px_20px_-10px_rgba(35,74,15,0.35)]"
+            style={{ background: "linear-gradient(to right, #234A0F, #2E5B12, #234A0F)" }}
           >
             <div className="flex items-center gap-2">
               <svg width="28" height="28" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -137,37 +136,20 @@ export function RecipeGeneratorPage() {
   }
 
   return (
-    <div className="relative min-h-screen w-full min-w-0 max-w-full overflow-x-hidden bg-[#F7F3EB] pb-24">
-      <DecorativeLeaves />
-      <Header />
+    <div className="relative min-h-screen w-full min-w-0 max-w-full overflow-x-hidden bg-[#F8F5EF] pb-[5.5rem] sm:pb-24">
+      <Header variant="recipe" />
 
-      <main className="mx-auto w-full min-w-0 max-w-[1440px] px-4 py-6 sm:px-8 sm:py-8 lg:px-12 xl:px-16">
-        <div className="mb-6 text-center sm:mb-8">
-          <h2 className="font-serif text-lg font-semibold text-[#1F3A2B] sm:text-2xl md:text-[26px]">
-            {"What's in your Fridge today?"}
-          </h2>
-          <div className="mt-3 flex items-center justify-center gap-1">
-            <span className="h-0.5 w-12 bg-[#F97316] sm:w-16" />
-            <span className="h-0.5 w-4 bg-[#F97316]/50 sm:w-5" />
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="mx-1.5 text-[#4F6B1F]">
-              <path
-                d="M12 4C10 7 8 9 7 12C6 15 7 19 12 22C17 19 18 15 17 12C16 9 14 7 12 4Z"
-                fill="currentColor"
-              />
-              <path d="M9 8C8 9 7.5 10 8 12" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
-              <path d="M15 8C16 9 16.5 10 16 12" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
-            </svg>
-            <span className="h-0.5 w-4 bg-[#F97316]/50 sm:w-5" />
-            <span className="h-0.5 w-12 bg-[#F97316] sm:w-16" />
-          </div>
-        </div>
+      <main className="mx-auto w-full min-w-0 max-w-6xl px-4 py-3 sm:px-6 sm:py-4 lg:max-w-[1200px] lg:px-10 lg:py-5">
+        <RecipeHeroBanner />
 
-        <div className="mx-auto w-full min-w-0 max-w-[1080px] space-y-5">
+        <div className="mx-auto w-full min-w-0 space-y-3 sm:space-y-4">
           <IngredientInput
             ingredients={formState.ingredients}
             onIngredientsChange={setIngredients}
             fridgeQuickPicks={fridgeQuickPicks}
           />
+
+          <MealTypeSelector selectedTypes={formState.mealTypeIds} onSelectedTypesChange={setMealTypeIds} />
 
           <FilterSection
             cuisine={formState.cuisine}
@@ -178,21 +160,28 @@ export function RecipeGeneratorPage() {
             onCookingStyleChange={setCookingStyle}
           />
 
-          <MealTypeSelector selectedTypes={formState.mealTypeIds} onSelectedTypesChange={setMealTypeIds} />
-
-          <div className="flex w-full min-w-0 max-w-full justify-center pt-2">
-            <Button
+          <div className="flex w-full min-w-0 max-w-full justify-center pt-0.5">
+            <button
+              type="button"
               onClick={() => {
                 setExpandedRecipeId(null)
                 setShowRecipeDetail(false)
                 generate()
               }}
               disabled={!canGenerate}
-              className="h-11 w-full max-w-full min-w-0 rounded-md bg-[#F97316] text-base font-semibold text-white hover:bg-[#F28C38] disabled:pointer-events-none disabled:opacity-50 sm:w-[360px] sm:max-w-[360px] sm:text-lg"
+              className="flex w-full max-w-full min-w-0 items-center gap-2.5 rounded-2xl bg-gradient-to-r from-[#F97316] via-[#F97316] to-[#FBBF77] px-3 py-2.5 text-left text-white shadow-[0_10px_28px_-10px_rgba(249,115,22,0.4)] transition-all duration-200 hover:scale-[1.01] hover:shadow-[0_12px_32px_-10px_rgba(249,115,22,0.48)] disabled:pointer-events-none disabled:opacity-60 disabled:hover:scale-100 sm:gap-3 sm:px-4 sm:py-3 md:py-3.5"
             >
-              <Sparkles className="mr-2 h-5 w-5" />
-              {isLoading ? "Generating..." : "Generate Recipes"}
-            </Button>
+              <Sparkles className="h-5 w-5 shrink-0 text-white drop-shadow sm:h-6 sm:w-6" strokeWidth={2} />
+              <div className="min-w-0 flex-1 space-y-0.5">
+                <p className="text-base font-bold leading-tight sm:text-lg md:text-xl">
+                  {isLoading ? "Generating..." : "Generate Recipes"}
+                </p>
+                <p className="text-[10px] font-medium text-white/95 sm:text-xs">Let AI work its magic ✨</p>
+              </div>
+              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white shadow-[0_3px_12px_rgba(0,0,0,0.1)] transition-all duration-200 sm:h-10 sm:w-10">
+                <ArrowRight className="h-4 w-4 text-[#F97316] sm:h-5 sm:w-5" strokeWidth={2.5} />
+              </span>
+            </button>
           </div>
         </div>
 
@@ -202,6 +191,7 @@ export function RecipeGeneratorPage() {
             expandedRecipeId={expandedRecipeId}
             onToggleExpand={handleToggleExpand}
             isMobile={isMobile}
+            containerClassName="mx-auto mt-3 w-full min-w-0 max-w-full rounded-xl border border-[#E2D9CC] bg-white p-3 shadow-sm sm:mt-4 sm:p-4"
           />
         )}
       </main>

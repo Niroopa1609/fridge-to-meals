@@ -1,5 +1,6 @@
 "use client"
 
+import { Heart } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { MEAL_TYPES } from "@/features/recipe-generator/constants"
 
@@ -8,10 +9,7 @@ interface MealTypeSelectorProps {
   onSelectedTypesChange: (types: string[]) => void
 }
 
-export function MealTypeSelector({
-  selectedTypes,
-  onSelectedTypesChange,
-}: MealTypeSelectorProps) {
+export function MealTypeSelector({ selectedTypes, onSelectedTypesChange }: MealTypeSelectorProps) {
   const toggleType = (typeId: string) => {
     if (selectedTypes.includes(typeId)) {
       onSelectedTypesChange(selectedTypes.filter((t) => t !== typeId))
@@ -21,41 +19,59 @@ export function MealTypeSelector({
   }
 
   return (
-    <div className="space-y-2">
-      <label className="text-sm font-medium text-[#1F3A2B]">
-        Select Meal Type <span className="text-[#F97316]">*</span>
-      </label>
-      <div className="flex w-full max-w-full min-w-0 items-center">
-        <div className="grid w-full min-w-0 max-w-full grid-cols-7 gap-0.5 sm:gap-1 md:gap-2 lg:gap-3">
-          {MEAL_TYPES.map((type) => (
+    <section className="w-full max-w-full min-w-0 border-b border-[#E6E0D4]/40 pb-3 sm:pb-4">
+      <div className="mb-1.5 flex items-start gap-1.5 sm:mb-2">
+        <span className="text-lg leading-none sm:text-xl" aria-hidden>
+          🍴
+        </span>
+        <h2 className="font-serif text-sm font-semibold text-[#1F3A2B] sm:text-base md:text-lg">
+          Select Meal Type <span className="text-[#F97316]">*</span>
+        </h2>
+      </div>
+
+      <div className="flex w-full min-w-0 justify-between gap-0.5 overflow-x-hidden sm:gap-1 md:gap-1.5">
+        {MEAL_TYPES.map((type) => {
+          const selected = selectedTypes.includes(type.id)
+          return (
             <button
               key={type.id}
               type="button"
               onClick={() => toggleType(type.id)}
-              aria-pressed={selectedTypes.includes(type.id)}
+              aria-pressed={selected}
               className={cn(
-                "flex min-h-[58px] min-w-0 w-full max-w-full flex-col items-center justify-center rounded-lg border-2 px-0.5 py-0.5 transition-all",
-                "gap-0.5 max-md:[&_svg]:!h-4 max-md:[&_svg]:!w-4",
-                "md:min-h-[76px] md:gap-1.5 md:px-2.5 md:py-2 md:[&_svg]:!h-7 md:[&_svg]:!w-7",
-                "lg:min-h-[82px] lg:[&_svg]:!h-8 lg:[&_svg]:!w-8",
-                selectedTypes.includes(type.id)
-                  ? "border-[#F97316] bg-[#FDE9DD] text-[#EA6A12]"
-                  : "border-[#E2D9CC] bg-white text-[#4F6B1F] hover:border-[#F97316]/50"
+                "relative flex min-h-0 min-w-0 flex-1 flex-col items-center justify-center rounded-2xl border px-0.5 py-1 transition-all duration-200 sm:px-0.5 sm:py-1.5 md:py-2",
+                "hover:scale-[1.02] hover:shadow-[0_6px_16px_-6px_rgba(47,74,22,0.12)]",
+                selected
+                  ? "border-[#F97316] bg-[#FFF4EC] text-[#EA6A12] shadow-[0_4px_14px_-4px_rgba(249,115,22,0.25)]"
+                  : "border-[#E4DDCF] bg-white text-[#2F4A16] shadow-[0_2px_10px_-4px_rgba(47,74,22,0.08)] hover:border-[#F97316]/35"
               )}
             >
-              {type.icon}
+              {selected ? (
+                <span
+                  className="absolute right-0.5 top-0.5 inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-[#F97316] text-white shadow-sm sm:right-1 sm:top-1 sm:h-4 sm:w-4 md:h-5 md:w-5"
+                  aria-hidden
+                >
+                  <Heart className="h-2 w-2 fill-white text-white sm:h-2.5 sm:w-2.5" strokeWidth={2} />
+                </span>
+              ) : null}
+              <span
+                className="mb-0 text-sm leading-none sm:text-base md:text-lg"
+                aria-hidden
+              >
+                {type.emoji}
+              </span>
               <span
                 className={cn(
-                  "w-full min-w-0 max-w-full text-center text-[10px] font-medium leading-[1.15] max-md:break-words max-md:whitespace-normal",
-                  "md:text-sm md:leading-tight"
+                  "w-full min-w-0 max-w-full break-words text-center text-[7px] font-semibold leading-[1.05] line-clamp-2 sm:text-[8px] md:text-[9px] lg:text-[10px]",
+                  selected ? "text-[#EA6A12]" : "text-[#1F3A2B]"
                 )}
               >
                 {type.name}
               </span>
             </button>
-          ))}
-        </div>
+          )
+        })}
       </div>
-    </div>
+    </section>
   )
 }

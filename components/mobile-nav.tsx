@@ -1,6 +1,6 @@
 "use client"
 
-import { CalendarDays, Heart, Refrigerator, Sparkles } from "lucide-react"
+import { ChefHat, Heart, Refrigerator, Star } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/features/auth/context/auth-context"
 
@@ -14,15 +14,15 @@ export function MobileNav({ activeTab, onTabChange }: MobileNavProps) {
   const isAuthed = Boolean(isHydrated && user)
 
   const tabs = [
-    { id: "today", label: "Today\u2019s Picks", icon: Sparkles },
+    { id: "today", label: "Today\u2019s Picks", icon: Star },
     { id: "fridge", label: "My Fridge", icon: Refrigerator, isPrimary: true },
-    { id: "planner", label: "Recipe Generator", icon: CalendarDays },
+    { id: "planner", label: "Recipe Generator", icon: ChefHat },
     { id: "favorites", label: "Favorites", icon: Heart },
   ]
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 w-full max-w-full min-w-0 border-t border-[#E2D9CC] bg-white">
-      <div className="flex h-16 w-full min-w-0 items-stretch">
+    <nav className="pointer-events-none fixed bottom-0 left-0 right-0 z-50 w-full max-w-full min-w-0 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2">
+      <div className="pointer-events-auto mx-auto flex h-[3.25rem] w-full max-w-2xl min-w-0 items-stretch rounded-full border border-[#E6E0D4]/90 bg-white/95 px-1 shadow-[0_10px_36px_-12px_rgba(47,74,22,0.14),0_2px_12px_-4px_rgba(0,0,0,0.05)] backdrop-blur-sm transition-shadow duration-200 sm:h-14 sm:px-2">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -42,8 +42,8 @@ export function MobileNav({ activeTab, onTabChange }: MobileNavProps) {
             }}
             disabled={false}
             className={cn(
-              "flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-0.5 py-1.5 text-center transition-colors",
-              "text-[10px] font-medium leading-tight sm:gap-1 sm:px-1 sm:text-xs",
+              "flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-0.5 py-1 text-center transition-all duration-200",
+              "text-[9px] font-semibold leading-tight sm:gap-1 sm:px-1 sm:text-[11px]",
               tab.id !== "planner" && !isAuthed && "opacity-55 text-[#1F3A2B]/45",
               activeTab === tab.id ? "text-[#F97316]" : "text-[#1F3A2B]/60 hover:text-[#1F3A2B]"
             )}
@@ -62,8 +62,6 @@ export function MobileNav({ activeTab, onTabChange }: MobileNavProps) {
           </button>
         ))}
       </div>
-      {/* iPhone home indicator spacing */}
-      <div className="h-1 w-32 mx-auto mb-1 rounded-full bg-[#1F3A2B]" />
     </nav>
   )
 }

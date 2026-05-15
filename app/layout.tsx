@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import type { ReactNode } from "react"
-import { Geist, Geist_Mono, Playfair_Display } from 'next/font/google'
+import { Caveat, Geist, Geist_Mono, Playfair_Display } from 'next/font/google'
 import { Analytics } from "@vercel/analytics/react"
 import { AuthProvider } from "@/features/auth/context/auth-context"
 import { RecipesStateProvider } from "@/features/recipes/state/recipes-state"
@@ -15,6 +15,12 @@ const _playfair = Playfair_Display({
   style: ['normal', 'italic'],
   weight: ['400', '500', '600', '700'],
 });
+
+const _caveat = Caveat({
+  subsets: ["latin"],
+  weight: ["600", "700"],
+  variable: "--font-caveat",
+})
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -50,7 +56,7 @@ export default function RootLayout({
   children: ReactNode
 }>) {
   return (
-    <html lang="en" className="overflow-x-hidden bg-[#F7F3EB]" suppressHydrationWarning>
+    <html lang="en" className={`overflow-x-hidden bg-[#F7F3EB] ${_caveat.variable}`} suppressHydrationWarning>
       <body
         className="min-h-dvh overflow-x-hidden bg-[#F7F3EB] font-sans antialiased"
         suppressHydrationWarning

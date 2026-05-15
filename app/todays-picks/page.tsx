@@ -23,7 +23,7 @@ export default function TodaysPicksPage() {
   return (
     <div className="relative min-h-screen bg-[#F7F3EB] pb-20">
       <DecorativeLeaves />
-      <Header />
+      <Header variant="recipe" />
 
       <main className="mx-auto max-w-[1440px] px-8 py-6 sm:py-8 lg:px-12 xl:px-16">
         <TodaysPicksSection />
