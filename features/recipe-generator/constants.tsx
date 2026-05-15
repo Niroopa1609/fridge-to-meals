@@ -12,9 +12,9 @@ export const MEAL_TYPES: MealTypeOption[] = [
   { id: "soup", name: "Soup", apiValue: "Soup", emoji: "🍲" },
   { id: "salad", name: "Salad", apiValue: "Salad", emoji: "🥗" },
   { id: "starter", name: "Appetizer", apiValue: "Appetizer", emoji: "🍢" },
-  { id: "breakfast", name: "Breakfast", apiValue: "Breakfast", emoji: "🌅" },
+  { id: "breakfast", name: "Breakfast", apiValue: "Breakfast", emoji: "☀️" },
   { id: "lunch", name: "Lunch", apiValue: "Lunch", emoji: "🍱" },
-  { id: "snack", name: "Snack", apiValue: "Snack", emoji: "🧋" },
+  { id: "snack", name: "Snack", apiValue: "Snack", emoji: "🥟" },
   { id: "dinner", name: "Dinner", apiValue: "Dinner", emoji: "🍽️" },
 ]
 
