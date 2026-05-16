@@ -36,27 +36,22 @@ function IllustrationHomeLink({ className }: { className?: string }) {
   )
 }
 
-/** Small leaf used as the tittle over “i” in Fridge (image 2). */
+/** Solid teardrop leaf — replaces the dot on dotless “ı” (tilted slightly clockwise). */
 function LeafForIDot({ className }: { className?: string }) {
   return (
     <svg
       className={className}
-      viewBox="0 0 14 16"
+      viewBox="0 0 12 14"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden
     >
-      <path
-        d="M7 1.2c-.8 1.6-2.6 3.1-3.4 5.4-.6 1.8-.2 3.6 1.2 4.9 1.1-1.4 2.1-3.1 2.4-5.1.3-2.1-.1-3.8-.2-5.2Z"
-        fill="currentColor"
-      />
-      <path
-        d="M10.2 4.2c.9 1.1 1.5 2.6 1.3 4.1-.2 1.9-1.4 3.5-3 4.5"
-        stroke="currentColor"
-        strokeWidth="1.2"
-        strokeLinecap="round"
-        opacity="0.85"
-      />
+      <g transform="rotate(40 6 7)">
+        <path
+           d="M6 1.15c2.95 1.35 5.05 4.85 4.35 8.65-.35 1.9-1.55 3.55-3.35 4.55l-.85.47-.85-.47c-1.8-1-3-2.65-3.35-4.55-.7-3.8 1.4-7.3 4.35-8.65Z"
+          fill="currentColor"
+        />
+      </g>
     </svg>
   )
 }
@@ -72,21 +67,22 @@ function FridgeBrandTitle({
 }) {
   const fridgeMeals =
     tone === "onDarkHeader" ? "font-semibold text-white" : "font-semibold text-[#1F3A2B]"
-  const leafColor = tone === "onDarkHeader" ? "text-emerald-400" : "text-[#22C55E]"
 
   return (
     <span className={cn("inline-flex flex-wrap items-baseline justify-center gap-x-0 font-serif font-bold tracking-tight", className)}>
       <span className={cn(fridgeMeals)}>Fr</span>
-      <span className={cn("relative inline-block align-baseline", fridgeMeals)}>
-        i
+      {/* Latin small letter dotless i (U+0131): no native tittle; leaf SVG replaces it */}
+      <span className={cn("relative inline-block shrink-0 align-baseline", fridgeMeals)}>
+        ı
         <span
-          className={cn(
-            "pointer-events-none absolute left-1/2 top-0 inline-flex -translate-x-1/2 -translate-y-[72%] items-center justify-center",
-            leafColor
-          )}
+          className="pointer-events-none absolute left-1/2 top-[0.22em] inline-flex items-end justify-center"
+          style={{
+            color: BRAND_ORANGE,
+            transform: "translate(calc(-50% + 0.08em), calc(-99% + 0.36em))",
+          }}
           aria-hidden
         >
-          <LeafForIDot className="h-[0.55em] w-[0.5em] min-h-[10px] min-w-[9px] sm:h-[0.5em] sm:w-[0.45em]" />
+          <LeafForIDot className="h-[0.34em] w-[0.29em] min-h-[7px] min-w-[6px]" />
         </span>
       </span>
       <span className={cn(fridgeMeals)}>dge</span>
@@ -156,7 +152,7 @@ export function Header({ variant = "default" }: { variant?: HeaderVariant }) {
             <div className="flex min-w-0 flex-1 items-center gap-2 pr-1 sm:gap-3 sm:pr-0">
               <IllustrationHomeLink className="ring-offset-2 ring-offset-[#234A0F]" />
               <div className="min-w-0">
-                <Link href="/" className="block leading-[1.15]">
+                <Link href="/" aria-label="Fridge To Meals" className="block leading-[1.15]">
                   <FridgeBrandTitle tone="onDarkHeader" className="text-base sm:text-lg" />
                 </Link>
                 <p className="mt-0.5 text-[11px] font-normal leading-snug text-white/85 sm:text-xs">
@@ -223,7 +219,7 @@ export function Header({ variant = "default" }: { variant?: HeaderVariant }) {
           </div>
 
           <h1 className="min-w-0 justify-self-center text-center drop-shadow-sm sm:text-lg md:text-4xl md:drop-shadow-none lg:text-[50px]">
-            <Link href="/" className="inline-block max-w-full px-0.5">
+            <Link href="/" aria-label="Fridge To Meals" className="inline-block max-w-full px-0.5">
               <FridgeBrandTitle tone="onDarkHeader" className="text-[15px] md:text-4xl lg:text-[50px]" />
             </Link>
           </h1>
