@@ -1,7 +1,9 @@
 "use client"
 
+import type { ReactNode } from "react"
 import type { Recipe } from "@/components/recipe-card"
 import { RecipeCard, RecipePreviewCard } from "@/components/recipe-card"
+import { cn } from "@/lib/utils"
 
 type Props = {
   recipes: Recipe[]
@@ -10,7 +12,11 @@ type Props = {
   isMobile: boolean
   title?: string
   subtitle?: string
-  rightAction?: React.ReactNode
+  /** Merged onto the title heading (e.g. mobile nowrap + fluid size). */
+  titleClassName?: string
+  /** Merged onto the subtitle paragraph. */
+  subtitleClassName?: string
+  rightAction?: ReactNode
   containerClassName?: string
   /** Today’s Picks: hide “Back to recipes” on mobile expanded detail */
   hideMobileRecipeBackLink?: boolean
@@ -23,6 +29,8 @@ export function RecipesSection({
   isMobile,
   title = "Your Recipes",
   subtitle,
+  titleClassName,
+  subtitleClassName,
   rightAction,
   containerClassName,
   hideMobileRecipeBackLink = false,
@@ -36,9 +44,18 @@ export function RecipesSection({
     >
       <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h3 className="font-serif text-lg font-bold text-[#1F3A2B] sm:text-xl">{title}</h3>
+          <h3
+            className={cn(
+              "font-serif text-lg font-bold text-[#1F3A2B] sm:text-xl",
+              titleClassName
+            )}
+          >
+            {title}
+          </h3>
           <div className="mt-2 h-0.5 w-12 bg-[#F97316]" />
-          {subtitle ? <p className="mt-2 text-sm text-[#1F3A2B]/60">{subtitle}</p> : null}
+          {subtitle ? (
+            <p className={cn("mt-2 text-sm text-[#1F3A2B]/60", subtitleClassName)}>{subtitle}</p>
+          ) : null}
         </div>
         {rightAction ? <div className="shrink-0">{rightAction}</div> : null}
       </div>

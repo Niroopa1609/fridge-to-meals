@@ -69,6 +69,7 @@ export function RecipeGeneratorPage() {
     if (tab === "planner") router.push("/")
     if (tab === "favorites") router.push("/favorites")
     if (tab === "fridge") router.push("/my-fridge")
+    if (tab === "terms") router.push("/terms")
   }
 
   const handleToggleExpand = (recipeId: string) => {

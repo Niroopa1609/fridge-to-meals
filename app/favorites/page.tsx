@@ -742,6 +742,7 @@ export default function FavoritesPage() {
           if (tab === "planner") router.push("/")
           if (tab === "fridge") router.push("/my-fridge")
           if (tab === "favorites") router.push("/favorites")
+          if (tab === "terms") router.push("/terms")
         }}
       />
     </div>

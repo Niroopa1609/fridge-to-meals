@@ -25,7 +25,7 @@ export default function TodaysPicksPage() {
       <DecorativeLeaves />
       <Header variant="recipe" />
 
-      <main className="mx-auto max-w-[1440px] px-8 py-6 sm:py-8 lg:px-12 xl:px-16">
+      <main className="mx-auto max-w-[1440px] px-4 py-6 sm:px-6 sm:py-8 md:px-8 lg:px-12 xl:px-16">
         <TodaysPicksSection />
       </main>
 
@@ -37,6 +37,7 @@ export default function TodaysPicksPage() {
           if (tab === "fridge") router.push("/my-fridge")
           if (tab === "planner") router.push("/")
           if (tab === "favorites") router.push("/favorites")
+          if (tab === "terms") router.push("/terms")
         }}
       />
     </div>

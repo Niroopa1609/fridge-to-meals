@@ -153,29 +153,40 @@ export function TodaysPicksSection({ className }: { className?: string }) {
 
   return (
     <section className={cn("mx-auto max-w-[1360px] space-y-4", className)}>
-      {/* Greeting */}
+      {/* Greeting — mobile sizes match card hierarchy: ~17px title, ~12px subtitle */}
       <div className="rounded-xl border border-[#E2D9CC] bg-white p-4 shadow-sm sm:p-6">
-        <p className="font-serif text-lg font-semibold text-[#1F3A2B] sm:text-xl">
-          Here’s what works today, {greetingName}! ☀️
+        <p
+          className={cn(
+            "min-w-0 max-w-full font-serif font-semibold leading-snug tracking-tight text-[#1F3A2B]",
+            "text-[17px] sm:text-lg md:text-xl md:leading-normal md:tracking-normal lg:text-2xl"
+          )}
+        >
+          Here’s what works for you today, {greetingName}! 🌞
         </p>
-        <p className="mt-1 text-sm text-[#1F3A2B]/65">From your fridge to your plate.</p>
+        <p className="mt-1.5 text-[12px] leading-snug text-[#1F3A2B]/55 sm:text-[13px] md:mt-2 md:text-sm md:text-[#1F3A2B]/60 md:leading-normal">
+          From your fridge to your plate.
+        </p>
       </div>
 
       {/* Cuisine preferences */}
       <div className="flex flex-col gap-3 rounded-xl border border-[#E2D9CC] bg-white p-4 shadow-sm sm:flex-row sm:items-start sm:justify-between sm:p-6">
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-[#1F3A2B]">Your Cuisine Preferences</p>
-          <div className="mt-3 flex flex-wrap gap-2">
+          <p className="text-[15px] font-semibold leading-snug text-[#1F3A2B] md:text-sm">
+            Your Cuisine Preferences
+          </p>
+          <div className="mt-2 flex flex-wrap gap-1.5 sm:mt-3 sm:gap-2">
             {(preferredCuisines.length > 0 ? preferredCuisines : ["Any"]).map((c) => (
               <span
                 key={c}
-                className="inline-flex h-9 items-center rounded-full border border-[#E2D9CC] bg-[#F7F3EB] px-3 text-sm font-medium text-[#1F3A2B]"
+                className="inline-flex min-h-8 items-center rounded-md border border-[#E2D9CC] bg-[#F7F3EB] px-2.5 py-1 text-[12px] font-medium leading-tight text-[#1F3A2B] sm:h-9 sm:rounded-full sm:px-3 sm:py-0 sm:text-sm"
               >
                 {c}
               </span>
             ))}
           </div>
-          <p className="mt-2 text-sm text-[#1F3A2B]/60">These help us personalize your daily picks.</p>
+          <p className="mt-1.5 text-[12px] leading-snug text-[#1F3A2B]/55 sm:text-[13px] md:mt-2 md:text-sm md:text-[#1F3A2B]/60 md:leading-normal">
+            These help us personalize your daily picks.
+          </p>
         </div>
         <Button
           type="button"
@@ -197,7 +208,7 @@ export function TodaysPicksSection({ className }: { className?: string }) {
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</div>
       ) : loading && recipes.length === 0 ? (
         <div className="space-y-3">
-          <p className="text-sm font-medium text-[#1F3A2B]/75">Finding meal ideas from your fridge…</p>
+          <p className="text-[12px] font-medium text-[#1F3A2B]/75 sm:text-sm">Finding meal ideas from your fridge…</p>
           <div className="grid gap-3 lg:grid-cols-3">
             <SkeletonCard />
             <SkeletonCard />
@@ -207,7 +218,7 @@ export function TodaysPicksSection({ className }: { className?: string }) {
       ) : recipes.length > 0 ? (
         <>
           {warnings.length > 0 ? (
-            <div className="rounded-xl border border-[#E2D9CC] bg-[#FBF8F2] p-4 text-sm text-[#1F3A2B]/75">
+            <div className="rounded-xl border border-[#E2D9CC] bg-[#FBF8F2] p-4 text-[12px] leading-snug text-[#1F3A2B]/75 sm:text-sm">
               <p className="font-semibold text-[#1F3A2B]">Tips</p>
               <ul className="mt-1 list-disc space-y-0.5 pl-5">
                 {warnings.map((w, idx) => (
@@ -224,6 +235,8 @@ export function TodaysPicksSection({ className }: { className?: string }) {
             isMobile={isMobile}
             title="Today’s picks from your fridge"
             subtitle="Picked from your fridge. Tailored to your taste."
+            titleClassName="text-[17px] font-bold leading-snug tracking-tight sm:text-lg md:text-xl lg:text-2xl"
+            subtitleClassName="mt-1.5 text-[12px] leading-snug text-[#1F3A2B]/55 sm:text-[13px] md:mt-2 md:text-sm md:text-[#1F3A2B]/60 md:leading-normal"
             rightAction={
               <Button
                 type="button"
