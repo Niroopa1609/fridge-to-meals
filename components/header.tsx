@@ -1,13 +1,102 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Home } from "lucide-react"
+import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/features/auth/context/auth-context"
 import { SignInDialog } from "@/features/auth/components/signin-dialog"
 import { SignUpDialog } from "@/features/auth/components/signup-dialog"
+import { cn } from "@/lib/utils"
+
+/** “To” uses brand orange (image 2). On green header bars, Fridge + Meals stay white like before for contrast; use tone onLight + #1F3A2B on a cream/white strip if needed later. */
+const BRAND_ORANGE = "#F97316"
+
+function IllustrationHomeLink({ className }: { className?: string }) {
+  return (
+    <Link
+      href="/"
+      className={cn(
+        "inline-flex shrink-0 items-center rounded-lg outline-offset-2 transition-opacity hover:opacity-90 focus-visible:outline focus-visible:ring-2 focus-visible:ring-white/70",
+        className
+      )}
+    >
+      <span className="sr-only">Fridge To Meals — home</span>
+      <Image
+        src="/brand/fridge-meals-illustration.png"
+        alt=""
+        width={140}
+        height={100}
+        className="h-9 w-auto max-h-10 object-contain object-left sm:h-10 sm:max-h-11 md:h-11"
+        priority
+        unoptimized
+      />
+    </Link>
+  )
+}
+
+/** Small leaf used as the tittle over “i” in Fridge (image 2). */
+function LeafForIDot({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 14 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
+    >
+      <path
+        d="M7 1.2c-.8 1.6-2.6 3.1-3.4 5.4-.6 1.8-.2 3.6 1.2 4.9 1.1-1.4 2.1-3.1 2.4-5.1.3-2.1-.1-3.8-.2-5.2Z"
+        fill="currentColor"
+      />
+      <path
+        d="M10.2 4.2c.9 1.1 1.5 2.6 1.3 4.1-.2 1.9-1.4 3.5-3 4.5"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+        opacity="0.85"
+      />
+    </svg>
+  )
+}
+
+type BrandTitleTone = "onDarkHeader" | "onLight"
+
+function FridgeBrandTitle({
+  tone,
+  className,
+}: {
+  tone: BrandTitleTone
+  className?: string
+}) {
+  const fridgeMeals =
+    tone === "onDarkHeader" ? "font-semibold text-white" : "font-semibold text-[#1F3A2B]"
+  const leafColor = tone === "onDarkHeader" ? "text-emerald-400" : "text-[#22C55E]"
+
+  return (
+    <span className={cn("inline-flex flex-wrap items-baseline justify-center gap-x-0 font-serif font-bold tracking-tight", className)}>
+      <span className={cn(fridgeMeals)}>Fr</span>
+      <span className={cn("relative inline-block align-baseline", fridgeMeals)}>
+        i
+        <span
+          className={cn(
+            "pointer-events-none absolute left-1/2 top-0 inline-flex -translate-x-1/2 -translate-y-[72%] items-center justify-center",
+            leafColor
+          )}
+          aria-hidden
+        >
+          <LeafForIDot className="h-[0.55em] w-[0.5em] min-h-[10px] min-w-[9px] sm:h-[0.5em] sm:w-[0.45em]" />
+        </span>
+      </span>
+      <span className={cn(fridgeMeals)}>dge</span>
+      <span className="mx-[0.12em] font-bold sm:mx-[0.18em]" style={{ color: BRAND_ORANGE }}>
+        To
+      </span>
+      <span className={cn(fridgeMeals)}> Meals</span>
+    </span>
+  )
+}
 
 function toTitleCaseName(name: string) {
   return String(name || "")
@@ -65,17 +154,10 @@ export function Header({ variant = "default" }: { variant?: HeaderVariant }) {
         >
           <div className="mx-auto flex min-h-[3.75rem] w-full min-w-0 max-w-6xl flex-row items-center justify-between gap-2 px-4 py-2 sm:min-h-[4rem] sm:gap-2.5 sm:px-6 sm:py-2.5 lg:max-w-[1200px] lg:px-10">
             <div className="flex min-w-0 flex-1 items-center gap-2 pr-1 sm:gap-3 sm:pr-0">
-              <button
-                type="button"
-                onClick={() => router.push("/")}
-                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white transition-all duration-200 hover:bg-white/10"
-                aria-label="Home"
-              >
-                <Home className="h-5 w-5" strokeWidth={2} />
-              </button>
+              <IllustrationHomeLink className="ring-offset-2 ring-offset-[#234A0F]" />
               <div className="min-w-0">
-                <Link href="/" className="block font-serif text-base font-semibold tracking-tight text-white sm:text-lg">
-                  Fridge To Meals
+                <Link href="/" className="block leading-[1.15]">
+                  <FridgeBrandTitle tone="onDarkHeader" className="text-base sm:text-lg" />
                 </Link>
                 <p className="mt-0.5 text-[11px] font-normal leading-snug text-white/85 sm:text-xs">
                   Smart meals from what you have <span aria-hidden>✨</span>
@@ -132,24 +214,17 @@ export function Header({ variant = "default" }: { variant?: HeaderVariant }) {
         style={{ background: "linear-gradient(to right, #3A4F16, #5C7A25)" }}
       >
         <div className="mx-auto grid min-h-[70px] w-full min-w-0 max-w-[1400px] grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-1.5 gap-y-1 px-2 py-2 sm:gap-x-2 sm:px-3 md:h-[90px] md:gap-x-2 md:py-0 md:px-4 lg:px-8">
-          <div className="flex min-w-0 items-center justify-self-start gap-0.5 md:gap-3">
-            <button
-              type="button"
-              onClick={() => router.push("/")}
-              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-white hover:bg-white/10 md:h-10 md:w-10"
-              aria-label="Home"
-            >
-              <Home className="h-4 w-4 md:h-6 md:w-6" strokeWidth={2} />
-            </button>
+          <div className="flex min-w-0 items-center justify-self-start gap-1.5 md:gap-3">
+            <IllustrationHomeLink className="ring-offset-2 ring-offset-[#3A4F16]" />
             <div className="min-w-0 text-[10px] font-medium leading-tight text-white/90 md:font-serif md:text-[15px] md:leading-[1.1] md:text-white">
               <div>Busy life.</div>
               <div>Meals decided.</div>
             </div>
           </div>
 
-          <h1 className="min-w-0 justify-self-center text-center font-serif text-[15px] font-bold tracking-wide text-white drop-shadow-sm sm:text-lg md:text-4xl md:drop-shadow-none lg:text-[50px]">
-            <Link href="/" className="inline-block max-w-full truncate px-0.5 font-bold">
-              Fridge To Meals
+          <h1 className="min-w-0 justify-self-center text-center drop-shadow-sm sm:text-lg md:text-4xl md:drop-shadow-none lg:text-[50px]">
+            <Link href="/" className="inline-block max-w-full px-0.5">
+              <FridgeBrandTitle tone="onDarkHeader" className="text-[15px] md:text-4xl lg:text-[50px]" />
             </Link>
           </h1>
 

@@ -6,6 +6,7 @@ import { AuthProvider } from "@/features/auth/context/auth-context"
 import { RecipesStateProvider } from "@/features/recipes/state/recipes-state"
 import { Toaster } from "@/components/ui/sonner"
 import { OnboardingGate } from "@/components/onboarding-gate"
+import { ServiceWorkerRegister } from "@/components/service-worker-register"
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] });
@@ -23,14 +24,21 @@ const _caveat = Caveat({
 })
 
 export const viewport: Viewport = {
-  width: 'device-width',
+  width: "device-width",
   initialScale: 1,
+  themeColor: "#234A0F",
 }
 
 export const metadata: Metadata = {
   title: 'Fridge To Meals - Busy life. Meals decided.',
   description: 'Generate delicious recipes based on the ingredients in your kitchen. Find meals that match your cuisine preferences, prep time, and cooking style.',
   generator: 'v0.app',
+  applicationName: 'Fridge To Meals',
+  appleWebApp: {
+    capable: true,
+    title: 'Fridge To Meals',
+    statusBarStyle: 'default',
+  },
   icons: {
     icon: [
       {
@@ -68,6 +76,7 @@ export default function RootLayout({
           </RecipesStateProvider>
         </AuthProvider>
         <Toaster />
+        <ServiceWorkerRegister />
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

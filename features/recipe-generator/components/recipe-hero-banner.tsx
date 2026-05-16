@@ -56,7 +56,7 @@ export function RecipeHeroBanner() {
             Cook something
           </h2>
           <p className="flex flex-wrap items-end gap-1.5">
-            <span className="font-[var(--font-caveat)] text-2xl font-semibold leading-[1.05] text-[#F97316] sm:text-3xl md:text-[2.15rem] lg:text-[2.35rem]">
+            <span className="font-[var(--font-caveat)] text-2xl font-semibold italic leading-[1.05] text-[#F97316] sm:text-3xl md:text-[2.15rem] lg:text-[2.35rem]">
               amazing today
             </span>
             <HeartOutline className="mb-1 inline-block h-[1.1em] w-[1.1em] shrink-0 text-[#F97316]" />
