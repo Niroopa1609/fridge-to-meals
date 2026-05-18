@@ -15,6 +15,7 @@ import { RecipesSection } from "@/features/recipe-generator/components/recipes-s
 import { useRecipeGenerator } from "@/features/recipe-generator/hooks/use-recipe-generator"
 import { useAuth } from "@/features/auth/context/auth-context"
 import { fetchFridgeItems } from "@/features/fridge/services/fridge"
+import { cn } from "@/lib/utils"
 
 export function RecipeGeneratorPage() {
   const isMobile = useIsMobile()
@@ -74,6 +75,18 @@ export function RecipeGeneratorPage() {
     setExpandedRecipeId(expandedRecipeId === recipeId ? null : recipeId)
   }
 
+  const hasIngredients = formState.ingredients.length > 0
+  const hasMealType = formState.mealTypeIds.length > 0
+  const isGenerateDisabled = !canStartGenerate && !isLoading
+
+  const generateHint = isGenerateDisabled
+    ? !hasIngredients && !hasMealType
+      ? "Add ingredients and select a meal type"
+      : !hasIngredients
+        ? "Add at least one ingredient"
+        : "Select at least one meal type"
+    : "Let AI work its magic ✨"
+
   return (
     <div className="relative min-h-screen w-full min-w-0 max-w-full overflow-x-hidden bg-[#F8F5EF] pb-[5.5rem] sm:pb-24">
       <DecorativeLeaves />
@@ -101,44 +114,57 @@ export function RecipeGeneratorPage() {
           />
 
           <div className="flex w-full min-w-0 max-w-full justify-center pt-0.5">
-            <div className="flex w-full max-w-full min-w-0 items-center gap-2 rounded-2xl bg-gradient-to-r from-[#F97316] via-[#F97316] to-[#FBBF77] px-3 py-2.5 text-white shadow-[0_10px_28px_-10px_rgba(249,115,22,0.4)] sm:gap-2.5 sm:px-4 sm:py-3 md:py-3.5">
-            <button
-              type="button"
-              onClick={() => {
-                if (isLoading) return
-                setExpandedRecipeId(null)
-                generate()
-              }}
-              disabled={!canStartGenerate || isLoading}
-              className="flex min-w-0 flex-1 items-center gap-2.5 text-left transition-all duration-200 enabled:hover:opacity-95 disabled:cursor-default disabled:opacity-100 sm:gap-3"
+            <div
+              className={cn(
+                "flex w-full max-w-full min-w-0 items-center gap-2 rounded-2xl bg-gradient-to-r from-[#F97316] via-[#F97316] to-[#FBBF77] px-3 py-2.5 text-white shadow-[0_10px_28px_-10px_rgba(249,115,22,0.4)] transition-all duration-200 sm:gap-2.5 sm:px-4 sm:py-3 md:py-3.5",
+                isGenerateDisabled && "cursor-not-allowed opacity-90"
+              )}
             >
-              <Sparkles className="h-5 w-5 shrink-0 text-white drop-shadow sm:h-6 sm:w-6" strokeWidth={2} />
-              <div className="min-w-0 flex-1 space-y-0.5">
-                <p className="text-base font-bold leading-tight sm:text-lg md:text-xl">
-                  {isLoading ? "Generating..." : "Generate Recipes"}
-                </p>
-                <p className="text-[10px] font-medium text-white/95 sm:text-xs">
-                  {isLoading ? "Tap stop to cancel" : "Let AI work its magic ✨"}
-                </p>
-              </div>
-            </button>
-            {isLoading ? (
               <button
                 type="button"
-                onClick={cancelGenerate}
-                aria-label="Stop generating recipes"
-                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[#F97316] shadow-[0_3px_12px_rgba(0,0,0,0.1)] transition-all duration-200 hover:scale-[1.04] hover:shadow-[0_4px_14px_rgba(0,0,0,0.12)] sm:h-10 sm:w-10"
+                onClick={() => {
+                  if (isLoading || !canStartGenerate) return
+                  setExpandedRecipeId(null)
+                  generate()
+                }}
+                disabled={!canStartGenerate || isLoading}
+                aria-disabled={!canStartGenerate || isLoading}
+                className={cn(
+                  "flex min-w-0 flex-1 items-center gap-2.5 text-left transition-all duration-200 sm:gap-3",
+                  "enabled:hover:opacity-95",
+                  "disabled:cursor-not-allowed disabled:pointer-events-none"
+                )}
               >
-                <Square className="h-4 w-4 fill-current sm:h-[1.15rem] sm:w-[1.15rem]" strokeWidth={0} aria-hidden />
+                <Sparkles
+                  className="h-5 w-5 shrink-0 text-white drop-shadow sm:h-6 sm:w-6"
+                  strokeWidth={2}
+                />
+                <div className="min-w-0 flex-1 space-y-0.5">
+                  <p className="text-base font-bold leading-tight text-white sm:text-lg md:text-xl">
+                    {isLoading ? "Generating..." : "Generate Recipes"}
+                  </p>
+                  <p className="text-[10px] font-medium text-white/95 sm:text-xs">
+                    {isLoading ? "Tap stop to cancel" : generateHint}
+                  </p>
+                </div>
               </button>
-            ) : (
-              <span
-                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white shadow-[0_3px_12px_rgba(0,0,0,0.1)] sm:h-10 sm:w-10"
-                aria-hidden
-              >
-                <ArrowRight className="h-4 w-4 text-[#F97316] sm:h-5 sm:w-5" strokeWidth={2.5} />
-              </span>
-            )}
+              {isLoading ? (
+                <button
+                  type="button"
+                  onClick={cancelGenerate}
+                  aria-label="Stop generating recipes"
+                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[#F97316] shadow-[0_3px_12px_rgba(0,0,0,0.1)] transition-all duration-200 hover:scale-[1.04] hover:shadow-[0_4px_14px_rgba(0,0,0,0.12)] sm:h-10 sm:w-10"
+                >
+                  <Square className="h-4 w-4 fill-current sm:h-[1.15rem] sm:w-[1.15rem]" strokeWidth={0} aria-hidden />
+                </button>
+              ) : (
+                <span
+                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[#F97316] shadow-[0_3px_12px_rgba(0,0,0,0.1)] sm:h-10 sm:w-10"
+                  aria-hidden
+                >
+                  <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" strokeWidth={2.5} />
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -158,4 +184,3 @@ export function RecipeGeneratorPage() {
     </div>
   )
 }
-
