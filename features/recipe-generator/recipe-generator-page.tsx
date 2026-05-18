@@ -1,13 +1,12 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { ArrowRight, Menu, Sparkles, Square } from "lucide-react"
+import { ArrowRight, Sparkles, Square } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Header } from "@/components/header"
 import { IngredientInput } from "@/components/ingredient-input"
 import { FilterSection } from "@/components/filter-section"
 import { MealTypeSelector } from "@/components/meal-type-selector"
-import { RecipeCard, RecipePreviewCard } from "@/components/recipe-card"
 import { MobileNav } from "@/components/mobile-nav"
 import { useIsMobile } from "@/components/ui/use-mobile"
 import { DecorativeLeaves } from "@/features/recipe-generator/components/decorative-leaves"
@@ -38,7 +37,6 @@ export function RecipeGeneratorPage() {
 
   const [expandedRecipeId, setExpandedRecipeId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState("planner")
-  const [showRecipeDetail, setShowRecipeDetail] = useState(false)
   const [fridgeQuickPicks, setFridgeQuickPicks] = useState<string[]>([])
 
   useEffect(() => {
@@ -73,69 +71,7 @@ export function RecipeGeneratorPage() {
   }
 
   const handleToggleExpand = (recipeId: string) => {
-    if (isMobile) {
-      setShowRecipeDetail(true)
-      setExpandedRecipeId(recipeId)
-    } else {
-      setExpandedRecipeId(expandedRecipeId === recipeId ? null : recipeId)
-    }
-  }
-
-  const handleBackToRecipes = () => {
-    setShowRecipeDetail(false)
-    setExpandedRecipeId(null)
-  }
-
-  // Mobile recipe detail view
-  if (isMobile && showRecipeDetail && expandedRecipeId) {
-    const expandedRecipe = recipes.find((r) => r.id === expandedRecipeId)
-    if (expandedRecipe) {
-      return (
-        <div className="min-h-screen w-full min-w-0 max-w-full overflow-x-hidden bg-[#F8F5EF] pb-24">
-          <header
-            className="sticky top-0 z-40 grid h-14 grid-cols-[1fr_auto_1fr] items-center px-4 text-white shadow-[0_8px_20px_-10px_rgba(35,74,15,0.35)]"
-            style={{ background: "linear-gradient(to right, #234A0F, #2E5B12, #234A0F)" }}
-          >
-            <div className="flex items-center gap-2">
-              <svg width="28" height="28" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path
-                  d="M20 6C18 10 15 12 13 16C11 20 12 26 20 32C28 26 29 20 27 16C25 12 22 10 20 6Z"
-                  fill="#F97316"
-                />
-              </svg>
-              <span className="font-serif text-lg font-normal italic">Fridge To Meals</span>
-            </div>
-            <button
-              type="button"
-              className="col-start-3 inline-flex h-10 w-10 items-center justify-center justify-self-end rounded-md hover:bg-white/10"
-              aria-label="Open menu"
-            >
-              <Menu className="h-6 w-6" />
-            </button>
-          </header>
-          <main className="w-full min-w-0 max-w-full p-4">
-            <RecipeCard
-              recipe={expandedRecipe}
-              isExpanded={true}
-              onToggleExpand={handleBackToRecipes}
-              isMobile={true}
-            />
-            <div className="mt-6 space-y-3">
-              {recipes
-                .filter((r) => r.id !== expandedRecipeId)
-                .map((recipe) => (
-                  <RecipePreviewCard
-                    key={recipe.id}
-                    recipe={recipe}
-                    onExpand={() => setExpandedRecipeId(recipe.id)}
-                  />
-                ))}
-            </div>
-          </main>
-          <MobileNav activeTab={activeTab} onTabChange={handleTabChange} />
-        </div>
-      )
-    }
+    setExpandedRecipeId(expandedRecipeId === recipeId ? null : recipeId)
   }
 
   return (
@@ -171,7 +107,6 @@ export function RecipeGeneratorPage() {
               onClick={() => {
                 if (isLoading) return
                 setExpandedRecipeId(null)
-                setShowRecipeDetail(false)
                 generate()
               }}
               disabled={!canStartGenerate || isLoading}

@@ -1,6 +1,6 @@
 "use client"
 
-import type { ReactNode } from "react"
+import { useEffect, useRef, type ReactNode } from "react"
 import type { Recipe } from "@/components/recipe-card"
 import { RecipeCard, RecipePreviewCard } from "@/components/recipe-card"
 import { cn } from "@/lib/utils"
@@ -35,6 +35,22 @@ export function RecipesSection({
   containerClassName,
   hideMobileRecipeBackLink = false,
 }: Props) {
+  const recipeCardRefs = useRef<Record<string, HTMLDivElement | null>>({})
+
+  useEffect(() => {
+    if (!expandedRecipeId) return
+
+    const expandedCard = recipeCardRefs.current[expandedRecipeId]
+    if (!expandedCard) return
+
+    const frame = window.requestAnimationFrame(() => {
+      expandedCard.scrollIntoView({ behavior: "smooth", block: "start", inline: "nearest" })
+      expandedCard.focus({ preventScroll: true })
+    })
+
+    return () => window.cancelAnimationFrame(frame)
+  }, [expandedRecipeId])
+
   return (
     <div
       className={
@@ -63,24 +79,30 @@ export function RecipesSection({
       <div className="space-y-4">
         {recipes.map((recipe) => {
           const isExpanded = expandedRecipeId === recipe.id
+          const setRecipeCardRef = (node: HTMLDivElement | null) => {
+            recipeCardRefs.current[recipe.id] = node
+          }
+
           if (expandedRecipeId && !isExpanded) {
             return (
-              <RecipePreviewCard
-                key={recipe.id}
-                recipe={recipe}
-                onExpand={() => onToggleExpand(recipe.id)}
-              />
+              <div key={recipe.id} ref={setRecipeCardRef} tabIndex={-1} className="scroll-mt-24 outline-none">
+                <RecipePreviewCard
+                  recipe={recipe}
+                  onExpand={() => onToggleExpand(recipe.id)}
+                />
+              </div>
             )
           }
           return (
-            <RecipeCard
-              key={recipe.id}
-              recipe={recipe}
-              isExpanded={isExpanded}
-              onToggleExpand={() => onToggleExpand(recipe.id)}
-              isMobile={isMobile}
-              hideMobileRecipeBackLink={hideMobileRecipeBackLink}
-            />
+            <div key={recipe.id} ref={setRecipeCardRef} tabIndex={-1} className="scroll-mt-24 outline-none">
+              <RecipeCard
+                recipe={recipe}
+                isExpanded={isExpanded}
+                onToggleExpand={() => onToggleExpand(recipe.id)}
+                isMobile={isMobile}
+                hideMobileRecipeBackLink={hideMobileRecipeBackLink}
+              />
+            </div>
           )
         })}
       </div>
