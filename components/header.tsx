@@ -156,7 +156,7 @@ export function Header({ variant = "default" }: { variant?: HeaderVariant }) {
                   <FridgeBrandTitle tone="onDarkHeader" className="text-base sm:text-lg" />
                 </Link>
                 <p className="mt-0.5 text-[11px] font-normal leading-snug text-white/85 sm:text-xs">
-                  Stop thinking about what to cook <span aria-hidden>✨</span>
+                  Stop wondering what to cook <span aria-hidden>✨</span>
                 </p>
               </div>
             </div>

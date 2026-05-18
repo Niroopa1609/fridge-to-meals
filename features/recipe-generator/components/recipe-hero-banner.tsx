@@ -44,12 +44,12 @@ export function RecipeHeroBanner() {
       />
 
       <div className="relative z-[2] flex min-h-[10rem] max-w-[min(100%,21rem)] flex-col justify-center gap-2 px-4 py-4 sm:min-h-[11rem] sm:max-w-[25rem] sm:px-6 sm:py-5 md:min-h-[220px] md:max-w-[30rem] md:px-8 md:py-6">
-        <span className="inline-flex w-fit max-w-full items-center gap-1.5 rounded-full bg-[#1B4332] px-3 py-1.5 font-sans text-[10px] font-semibold uppercase tracking-wide text-white shadow-md sm:text-[11px]">
-          <span className="text-sm leading-none" aria-hidden>
-            ✨
-          </span>
-          AI-Powered
+      <span className="inline-flex w-fit max-w-full items-center gap-1.5 rounded-full bg-[#1B4332] px-3 py-1.5 font-sans text-[11px] font-semibold tracking-wide text-white shadow-md sm:text-sm">
+        <span className="text-base leading-none" aria-hidden>
+          ✨
         </span>
+        Busy Life. Meals Decided
+</span>
 
         <div className="min-w-0 space-y-0">
           <h2 className="font-serif text-lg font-semibold leading-[1.1] tracking-tight text-[#1C1C1C] sm:text-xl md:text-[1.65rem] lg:text-[1.85rem]">
@@ -64,7 +64,7 @@ export function RecipeHeroBanner() {
         </div>
 
         <p className="max-w-full font-sans text-[11px] font-normal leading-relaxed text-[#5C5C5C] sm:text-sm md:text-[15px]">
-          AI recipes from ingredients you already have
+          Meals made from ingredients you already have
         </p>
       </div>
     </div>
