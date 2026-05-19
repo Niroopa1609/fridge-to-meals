@@ -2,7 +2,7 @@
 
 import { Checkbox } from "@/components/ui/checkbox"
 
-export function RememberEmailCheckbox({
+export function RememberDeviceCheckbox({
   id,
   checked,
   onCheckedChange,
@@ -20,7 +20,7 @@ export function RememberEmailCheckbox({
         className="border-[#E2D9CC] data-[state=checked]:border-[#F97316] data-[state=checked]:bg-[#F97316] data-[state=checked]:text-white"
       />
       <label htmlFor={id} className="cursor-pointer text-xs font-medium text-[#1F3A2B]/70">
-        Remember email
+        Remember this device
       </label>
     </div>
   )

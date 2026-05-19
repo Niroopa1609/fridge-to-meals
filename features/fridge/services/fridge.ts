@@ -92,7 +92,8 @@ export type DetectIngredientsResponse = {
 
 export async function detectFridgeIngredients(
   accessToken: string,
-  files: File[]
+  files: File[],
+  signal?: AbortSignal
 ): Promise<DetectIngredientsResponse> {
   const requestId = getRequestId()
   const formData = new FormData()
@@ -103,6 +104,7 @@ export async function detectFridgeIngredients(
     method: "POST",
     headers: { Authorization: `Bearer ${accessToken}` },
     body: formData,
+    signal,
     requestId,
     safeLogFields: { imageCount: files.length },
   })

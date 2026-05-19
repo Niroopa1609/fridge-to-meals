@@ -11,7 +11,7 @@ function normalizeEmail(email: string) {
 
 export async function POST(req: Request) {
   try {
-    const body = (await req.json()) as { email?: string; password?: string }
+    const body = (await req.json()) as { email?: string; password?: string; rememberDevice?: boolean }
     const email = normalizeEmail(body.email || "")
     const password = body.password || ""
     if (!email || !password) {
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
       String(user.email),
       String(user.name),
       user.created_at ? String(user.created_at) : undefined,
-      { userAgent: ua, ip }
+      { userAgent: ua, ip, rememberDevice: body.rememberDevice !== false }
     )
     return NextResponse.json(session)
   } catch (e) {

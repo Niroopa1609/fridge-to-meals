@@ -3,11 +3,15 @@
 import { useEffect, useState } from "react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import { PasswordInput } from "@/components/ui/password-input"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/features/auth/context/auth-context"
 import { requestPasswordReset } from "@/features/auth/services/auth"
-import { RememberEmailCheckbox } from "@/features/auth/components/remember-email-checkbox"
-import { readRememberedEmail, writeRememberedEmail } from "@/features/auth/remember-email"
+import { RememberDeviceCheckbox } from "@/features/auth/components/remember-device-checkbox"
+import {
+  readRememberDevicePreference,
+  writeRememberDevicePreference,
+} from "@/features/auth/remember-device"
 
 const RESET_SUCCESS_MESSAGE =
   "If an account exists for this email, we'll send a password reset link."
@@ -33,7 +37,7 @@ export function SignInDialog({
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [forgotSuccess, setForgotSuccess] = useState<string | null>(null)
-  const [rememberEmail, setRememberEmail] = useState(false)
+  const [rememberDevice, setRememberDevice] = useState(true)
 
   useEffect(() => {
     if (!open) {
@@ -43,27 +47,19 @@ export function SignInDialog({
       setIsLoading(false)
       return
     }
-    const saved = readRememberedEmail()
-    setRememberEmail(saved.remember)
-    if (saved.email) setEmail(saved.email)
+    setRememberDevice(readRememberDevicePreference())
   }, [open])
 
-  const handleRememberEmailChange = (checked: boolean) => {
-    setRememberEmail(checked)
-    writeRememberedEmail(email, checked)
-  }
-
-  const handleEmailChange = (value: string) => {
-    setEmail(value)
-    if (rememberEmail) writeRememberedEmail(value, true)
+  const handleRememberDeviceChange = (checked: boolean) => {
+    setRememberDevice(checked)
+    writeRememberDevicePreference(checked)
   }
 
   const submitSignIn = async () => {
     setError(null)
     setIsLoading(true)
     try {
-      await signIn({ email, password })
-      writeRememberedEmail(email, rememberEmail)
+      await signIn({ email, password, rememberDevice })
       onOpenChange(false)
       onSuccess?.()
       setPassword("")
@@ -116,30 +112,29 @@ export function SignInDialog({
               <label className="text-sm font-medium text-[#1F3A2B]">Email</label>
               <Input
                 value={email}
-                onChange={(e) => handleEmailChange(e.target.value)}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="user@example.com"
                 className="border-[#E2D9CC] bg-white placeholder:text-[#1F3A2B]/35"
                 type="email"
                 autoComplete="email"
               />
-              <RememberEmailCheckbox
-                id="signin-remember-email"
-                checked={rememberEmail}
-                onCheckedChange={handleRememberEmailChange}
-              />
             </div>
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-[#1F3A2B]">Password</label>
-              <Input
+              <PasswordInput
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 className="border-[#E2D9CC] bg-white placeholder:text-[#1F3A2B]/35"
-                type="password"
                 autoComplete="current-password"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") void submitSignIn()
                 }}
+              />
+              <RememberDeviceCheckbox
+                id="signin-remember-device"
+                checked={rememberDevice}
+                onCheckedChange={handleRememberDeviceChange}
               />
             </div>
 
@@ -187,7 +182,7 @@ export function SignInDialog({
               <label className="text-sm font-medium text-[#1F3A2B]">Email</label>
               <Input
                 value={email}
-                onChange={(e) => handleEmailChange(e.target.value)}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="user@example.com"
                 className="border-[#E2D9CC] bg-white placeholder:text-[#1F3A2B]/35"
                 type="email"

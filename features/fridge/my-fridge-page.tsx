@@ -5,6 +5,7 @@ import Image from "next/image"
 import { useRouter } from "next/navigation"
 import {
   Apple,
+  ArrowRight,
   Camera,
   Carrot,
   ChevronRight,
@@ -18,6 +19,7 @@ import {
   Plus,
   Refrigerator,
   Sparkles,
+  Square,
   X,
 } from "lucide-react"
 import { toast } from "sonner"
@@ -139,13 +141,7 @@ function summaryCounts(items: FridgeItemDto[]): Record<FridgeCategory, number> {
 export function MyFridgePage() {
   const router = useRouter()
   const { accessToken, user, isHydrated } = useAuth()
-
-  useEffect(() => {
-    if (!isHydrated) return
-    if (user && accessToken) return
-    window.dispatchEvent(new Event("auth:signin"))
-    router.replace("/")
-  }, [accessToken, isHydrated, router, user])
+  const isLoggedIn = Boolean(isHydrated && user && accessToken)
 
   const [selectedImages, setSelectedImages] = useState<SelectedImage[]>([])
   const [detectedIngredients, setDetectedIngredients] = useState<DetectedIngredientRow[]>([])
@@ -170,6 +166,7 @@ export function MyFridgePage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const summaryInventoryRef = useRef<HTMLDivElement>(null)
   const dragDepthRef = useRef(0)
+  const detectAbortRef = useRef<AbortController | null>(null)
 
   const scrollSummaryInventory = useCallback(() => {
     requestAnimationFrame(() => {
@@ -196,6 +193,10 @@ export function MyFridgePage() {
     if (!isHydrated) return
     void reloadSaved()
   }, [isHydrated, reloadSaved])
+
+  useEffect(() => {
+    return () => detectAbortRef.current?.abort()
+  }, [])
 
   const selectedImagesRef = useRef(selectedImages)
   selectedImagesRef.current = selectedImages
@@ -295,6 +296,10 @@ export function MyFridgePage() {
     }
   }
 
+  const handleStopDetection = () => {
+    detectAbortRef.current?.abort()
+  }
+
   const handleDetectIngredients = async () => {
     setDetectionError(null)
     if (selectedImages.length === 0) return
@@ -303,10 +308,13 @@ export function MyFridgePage() {
       window.dispatchEvent(new Event("auth:signin"))
       return
     }
+    detectAbortRef.current?.abort()
+    const controller = new AbortController()
+    detectAbortRef.current = controller
     setIsDetecting(true)
     try {
       const files = selectedImages.map((x) => x.file)
-      const data = await detectFridgeIngredients(accessToken, files)
+      const data = await detectFridgeIngredients(accessToken, files, controller.signal)
       const rows = (data.ingredients ?? [])
         .map((row) => ({
           id: crypto.randomUUID(),
@@ -320,10 +328,17 @@ export function MyFridgePage() {
         toast.message("No ingredients were found in those images.")
       }
     } catch (err) {
+      if (controller.signal.aborted) {
+        toast.message("Detection stopped.")
+        return
+      }
       const msg = err instanceof Error ? err.message : "Detection failed. Please try again."
       setDetectionError(msg)
       toast.error(msg)
     } finally {
+      if (detectAbortRef.current === controller) {
+        detectAbortRef.current = null
+      }
       setIsDetecting(false)
     }
   }
@@ -576,15 +591,62 @@ export function MyFridgePage() {
               </p>
               </div>
 
-              <Button
-                type="button"
-                className="mt-4 w-full shrink-0 bg-[#4F6B1F] font-semibold text-white hover:bg-[#3d5518] disabled:opacity-50 lg:mt-auto lg:pt-2"
-                disabled={selectedImages.length === 0 || isDetecting}
-                onClick={() => void handleDetectIngredients()}
+              <div
+                className={cn(
+                  "mt-4 flex w-full min-w-0 shrink-0 items-center gap-2 rounded-2xl bg-gradient-to-r from-[#4F6B1F] via-[#4F6B1F] to-[#6B8F3A] px-3 py-2.5 text-white shadow-[0_10px_28px_-10px_rgba(79,107,31,0.35)] transition-all duration-200 sm:gap-2.5 sm:px-4 sm:py-3 lg:mt-auto lg:pt-2",
+                  selectedImages.length === 0 && "cursor-not-allowed opacity-50"
+                )}
               >
-                <Sparkles className="mr-2 h-4 w-4" />
-                {isDetecting ? "Detecting ingredients…" : "Detect Ingredients"}
-              </Button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (isDetecting || selectedImages.length === 0) return
+                    void handleDetectIngredients()
+                  }}
+                  disabled={selectedImages.length === 0 || isDetecting}
+                  aria-disabled={selectedImages.length === 0 || isDetecting}
+                  className={cn(
+                    "flex min-w-0 flex-1 items-center gap-2.5 text-left transition-all duration-200 sm:gap-3",
+                    "enabled:hover:opacity-95",
+                    "disabled:cursor-not-allowed disabled:pointer-events-none"
+                  )}
+                >
+                  {isDetecting ? (
+                    <Loader2 className="h-5 w-5 shrink-0 animate-spin text-white sm:h-6 sm:w-6" aria-hidden />
+                  ) : (
+                    <Sparkles className="h-5 w-5 shrink-0 text-white drop-shadow sm:h-6 sm:w-6" strokeWidth={2} aria-hidden />
+                  )}
+                  <div className="min-w-0 flex-1 space-y-0.5">
+                    <p className="text-base font-bold leading-tight text-white sm:text-lg">
+                      {isDetecting ? "Detecting ingredients…" : "Detect Ingredients"}
+                    </p>
+                    <p className="text-[10px] font-medium text-white/95 sm:text-xs">
+                      {isDetecting
+                        ? "Tap stop to cancel"
+                        : selectedImages.length === 0
+                          ? "Add at least one image above"
+                          : "Scan your grocery photos"}
+                    </p>
+                  </div>
+                </button>
+                {isDetecting ? (
+                  <button
+                    type="button"
+                    onClick={handleStopDetection}
+                    aria-label="Stop ingredient detection"
+                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[#4F6B1F] shadow-[0_3px_12px_rgba(0,0,0,0.1)] transition-all duration-200 hover:scale-[1.04] hover:shadow-[0_4px_14px_rgba(0,0,0,0.12)] sm:h-10 sm:w-10"
+                  >
+                    <Square className="h-4 w-4 fill-current sm:h-[1.15rem] sm:w-[1.15rem]" strokeWidth={0} aria-hidden />
+                  </button>
+                ) : (
+                  <span
+                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[#4F6B1F] shadow-[0_3px_12px_rgba(0,0,0,0.1)] sm:h-10 sm:w-10"
+                    aria-hidden
+                  >
+                    <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" strokeWidth={2.5} />
+                  </span>
+                )}
+              </div>
             </section>
 
             {/* Detected */}
@@ -670,7 +732,12 @@ export function MyFridgePage() {
           </div>
 
           {/* Summary */}
-          <section id="fridge-summary" className="rounded-2xl border border-[#E2D9CC] bg-white p-5 pb-8 shadow-sm sm:p-6 sm:pb-10">
+          <section
+            id="fridge-summary"
+            className="relative rounded-2xl border border-[#E2D9CC] bg-white p-5 pb-8 shadow-sm sm:p-6 sm:pb-10"
+            aria-disabled={!isLoggedIn}
+          >
+            <div className={cn(!isLoggedIn && isHydrated && "opacity-45")}>
             <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
               <div className="flex items-start gap-2">
                 <Refrigerator className="mt-0.5 h-5 w-5 shrink-0 text-[#4F6B1F]" aria-hidden />
@@ -683,6 +750,7 @@ export function MyFridgePage() {
                 type="button"
                 variant="ghost"
                 size="sm"
+                disabled={!isLoggedIn}
                 onClick={() => {
                   setSelectedCategory("ALL")
                   scrollSummaryInventory()
@@ -712,6 +780,7 @@ export function MyFridgePage() {
                   <button
                     key={cat}
                     type="button"
+                    disabled={!isLoggedIn}
                     onClick={() => {
                       setSelectedCategory(cat)
                       scrollSummaryInventory()
@@ -753,7 +822,7 @@ export function MyFridgePage() {
                     variant="outline"
                     size="sm"
                     className="h-8 shrink-0 self-start border-red-200 text-xs font-semibold text-red-700 hover:bg-red-50 hover:text-red-800"
-                    disabled={removeAllFridgeBusy || anyFridgeDeletePending}
+                    disabled={!isLoggedIn || removeAllFridgeBusy || anyFridgeDeletePending}
                     onClick={() => setRemoveAllFridgeOpen(true)}
                   >
                     Remove All
@@ -837,10 +906,20 @@ export function MyFridgePage() {
               </AlertDialogContent>
             </AlertDialog>
 
-            {savedItems.length === 0 && isHydrated && user ? (
+            {savedItems.length === 0 && isHydrated && isLoggedIn ? (
               <p className="mt-3 text-sm text-[#1F3A2B]/60">
                 No saved ingredients yet. Detect ingredients, then use Save to My Fridge.
               </p>
+            ) : null}
+            </div>
+
+            {!isLoggedIn && isHydrated ? (
+              <button
+                type="button"
+                className="absolute inset-0 z-10 cursor-pointer rounded-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F97316]/50"
+                aria-label="Sign in to view your fridge summary"
+                onClick={() => window.dispatchEvent(new Event("auth:signin"))}
+              />
             ) : null}
           </section>
         </div>

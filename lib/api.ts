@@ -1,5 +1,6 @@
 import { getRequestId } from "@/lib/request-id"
 import { logError, logInfo } from "@/lib/logger"
+import { getClientAccessToken, tryRefreshSession } from "@/lib/auth-session-client"
 
 type ApiFetchOptions = Omit<RequestInit, "headers"> & {
   requestId?: string
@@ -16,6 +17,41 @@ function resolveUrl(path: string): string {
   return `${base}${p}`
 }
 
+function isAuthPath(path: string): boolean {
+  return path.startsWith("/api/auth") || path === "/api/logs/frontend"
+}
+
+function withUpdatedAuthHeader(headers: Record<string, string>): Record<string, string> {
+  const token = getClientAccessToken()
+  if (!token) return headers
+  if (!headers.Authorization && !headers.authorization) return headers
+  return { ...headers, Authorization: `Bearer ${token}` }
+}
+
+async function fetchWithAuthRetry(
+  url: string,
+  options: ApiFetchOptions,
+  headers: Record<string, string>,
+  requestId: string,
+  path: string
+): Promise<Response> {
+  const res = await fetch(url, { ...options, headers })
+
+  if (
+    typeof window === "undefined" ||
+    isAuthPath(path) ||
+    (res.status !== 401 && res.status !== 403)
+  ) {
+    return res
+  }
+
+  const refreshed = await tryRefreshSession()
+  if (!refreshed) return res
+
+  const retryHeaders = withUpdatedAuthHeader(headers)
+  return fetch(url, { ...options, headers: retryHeaders })
+}
+
 export async function apiFetch(path: string, options: ApiFetchOptions = {}) {
   const requestId = options.requestId ?? getRequestId()
   const url = resolveUrl(path)
@@ -28,14 +64,13 @@ export async function apiFetch(path: string, options: ApiFetchOptions = {}) {
   logInfo("api.request.start", requestId, { method: options.method ?? "GET", path, ...(options.safeLogFields ?? {}) })
 
   try {
-    const res = await fetch(url, { ...options, headers })
+    let res = await fetchWithAuthRetry(url, options, headers, requestId, path)
     logInfo("api.request.end", requestId, { method: options.method ?? "GET", path, status: res.status })
 
     if (
       typeof window !== "undefined" &&
       (res.status === 401 || res.status === 403) &&
-      !path.startsWith("/api/auth") &&
-      path !== "/api/logs/frontend"
+      !isAuthPath(path)
     ) {
       window.dispatchEvent(
         new CustomEvent("auth:unauthorized", {

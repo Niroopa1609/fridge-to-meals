@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { Suspense, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { PasswordInput } from "@/components/ui/password-input"
 
 function ResetPasswordForm() {
   const searchParams = useSearchParams()
@@ -58,8 +58,7 @@ function ResetPasswordForm() {
         <div className="mt-5 space-y-3">
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-[#1F3A2B]">New password</label>
-            <Input
-              type="password"
+            <PasswordInput
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="border-[#E2D9CC] bg-white"
@@ -68,8 +67,7 @@ function ResetPasswordForm() {
           </div>
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-[#1F3A2B]">Confirm password</label>
-            <Input
-              type="password"
+            <PasswordInput
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
               className="border-[#E2D9CC] bg-white"

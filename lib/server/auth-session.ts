@@ -9,8 +9,10 @@ export type AuthUserOut = {
   createdAt?: string
 }
 
-function refreshExpiresAtIso(): string {
-  const days = Number(process.env.JWT_REFRESH_EXPIRES_DAYS ?? "30")
+function refreshExpiresAtIso(rememberDevice: boolean): string {
+  const days = rememberDevice
+    ? Number(process.env.JWT_REFRESH_EXPIRES_DAYS ?? "30")
+    : Number(process.env.JWT_REFRESH_EXPIRES_DAYS_SESSION ?? "1")
   return new Date(Date.now() + days * 86400000).toISOString()
 }
 
@@ -19,8 +21,9 @@ export async function issueSession(
   email: string,
   name: string,
   createdAtIso: string | undefined,
-  meta: { userAgent: string | null; ip: string | null }
+  meta: { userAgent: string | null; ip: string | null; rememberDevice?: boolean }
 ): Promise<{ accessToken: string; refreshToken: string; user: AuthUserOut }> {
+  const rememberDevice = meta.rememberDevice !== false
   const supabase = createAdminClient()
   const accessToken = await signAccessToken({ sub: email, uid: userId, name })
   const refreshToken = generateRefreshTokenRaw()
@@ -31,7 +34,7 @@ export async function issueSession(
     user_id: userId,
     token_hash: tokenHash,
     created_at: now,
-    expires_at: refreshExpiresAtIso(),
+    expires_at: refreshExpiresAtIso(rememberDevice),
     last_used_at: now,
     user_agent: meta.userAgent,
     ip: meta.ip,
@@ -78,11 +81,14 @@ export async function rotateRefreshToken(
     .update({ revoked_at: revokedAt, last_used_at: revokedAt })
     .eq("id", row.id)
 
+  const msLeft = new Date(row.expires_at).getTime() - now
+  const rememberDevice = msLeft > 7 * 86400000
+
   return issueSession(
     userRow.id,
     String(userRow.email),
     String(userRow.name),
     userRow.created_at ? String(userRow.created_at) : undefined,
-    meta
+    { ...meta, rememberDevice }
   )
 }

@@ -13,6 +13,9 @@ interface MobileNavProps {
 export function MobileNav({ activeTab, onTabChange }: MobileNavProps) {
   const { user, isHydrated } = useAuth()
   const isAuthed = Boolean(isHydrated && user)
+  const guestAllowedTab = (tabId: string) =>
+    tabId === "planner" || tabId === "terms" || tabId === "fridge"
+  const authRequiredTab = (tabId: string) => !guestAllowedTab(tabId)
 
   const tabs: {
     id: string
@@ -37,7 +40,7 @@ export function MobileNav({ activeTab, onTabChange }: MobileNavProps) {
             title={tab.label}
             data-footer-favorites={tab.id === "favorites" ? "true" : undefined}
             onClick={() => {
-              if (tab.id === "planner" || tab.id === "terms") {
+              if (guestAllowedTab(tab.id)) {
                 onTabChange(tab.id)
                 return
               }
@@ -51,10 +54,7 @@ export function MobileNav({ activeTab, onTabChange }: MobileNavProps) {
             className={cn(
               "flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-0.5 py-1 text-center transition-all duration-200",
               "text-[9px] font-semibold leading-tight sm:gap-1 sm:px-0.5 sm:text-[11px]",
-              tab.id !== "planner" &&
-                tab.id !== "terms" &&
-                !isAuthed &&
-                "opacity-55 text-[#1F3A2B]/45",
+              authRequiredTab(tab.id) && !isAuthed && "opacity-55 text-[#1F3A2B]/45",
               activeTab === tab.id ? "text-[#F97316]" : "text-[#1F3A2B]/60 hover:text-[#1F3A2B]"
             )}
           >
@@ -63,7 +63,7 @@ export function MobileNav({ activeTab, onTabChange }: MobileNavProps) {
                 "h-[0.9375rem] w-[0.9375rem] shrink-0 sm:h-[1.15rem] sm:w-[1.15rem]",
                 tab.isPrimary && "sm:h-5 sm:w-5",
                 activeTab === tab.id && "text-[#F97316] fill-[#F97316]/20",
-                tab.id !== "planner" && tab.id !== "terms" && !isAuthed && "text-[#1F3A2B]/45"
+                authRequiredTab(tab.id) && !isAuthed && "text-[#1F3A2B]/45"
               )}
             />
             <span className="line-clamp-2 w-full min-w-0 max-w-full break-words px-0">

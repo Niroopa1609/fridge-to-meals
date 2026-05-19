@@ -60,7 +60,7 @@ export async function POST(req: Request) {
       String(inserted.email),
       String(inserted.name),
       inserted.created_at ? String(inserted.created_at) : undefined,
-      { userAgent: ua, ip }
+      { userAgent: ua, ip, rememberDevice: true }
     )
     return NextResponse.json(session, { status: 201 })
   } catch (e) {
