@@ -108,12 +108,12 @@ export async function generateJsonTextFromImages(userInstruction: string, imageD
 export async function transcribeAudioWebm(bytes: Uint8Array, filename: string): Promise<string> {
   const apiKey = process.env.OPENAI_API_KEY?.trim()
   const baseUrl = (process.env.OPENAI_BASE_URL?.trim() || "https://api.openai.com").replace(/\/$/, "")
-  const whisperModel = process.env.OPENAI_WHISPER_MODEL?.trim() || "whisper-1"
+  const transcribeModel = process.env.OPENAI_TRANSCRIBE_MODEL?.trim() || "whisper-1"
   if (!apiKey) throw new Error("OPENAI_API_KEY is not configured")
   const form = new FormData()
   const blob = new Blob([bytes], { type: "application/octet-stream" })
   form.append("file", blob, filename)
-  form.append("model", whisperModel)
+  form.append("model", transcribeModel)
   form.append("response_format", "json")
   const res = await fetch(`${baseUrl}/v1/audio/transcriptions`, {
     method: "POST",
