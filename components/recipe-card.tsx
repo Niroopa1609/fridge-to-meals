@@ -199,7 +199,19 @@ export function RecipeCard({
     }
 
     return (
-      <div className="overflow-hidden rounded-xl border border-[#E2D9CC] bg-white shadow-sm">
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onToggleExpand}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault()
+            onToggleExpand()
+          }
+        }}
+        className="cursor-pointer overflow-hidden rounded-xl border border-[#E2D9CC] bg-white shadow-sm transition-shadow hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F97316]/50"
+        aria-label={`View full recipe: ${recipe.title}`}
+      >
         <div className="flex flex-col sm:flex-row">
           <div className="relative h-48 w-full shrink-0 overflow-hidden sm:h-[180px] sm:w-[280px] sm:rounded-l-xl lg:h-[190px] lg:w-[320px]">
             <Image
@@ -246,8 +258,14 @@ export function RecipeCard({
                 </div>
               </div>
               <button
-                onClick={(e) => handleSaveFavorite(e.currentTarget)}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  void handleSaveFavorite(e.currentTarget)
+                }}
                 className="rounded-lg border border-[#E2D9CC] p-2 hover:bg-[#E4ECD4]"
+                aria-label={isFavorited ? "Saved to favorites" : "Save to favorites"}
+                disabled={isSavingFavorite}
               >
                 <Heart
                   className={cn(
@@ -277,13 +295,10 @@ export function RecipeCard({
             )}
 
             <div className="mt-auto flex items-center justify-end pt-4">
-              <button
-                onClick={onToggleExpand}
-                className="flex items-center gap-1.5 text-xs font-semibold text-[#EA6A12] hover:text-[#F28C38]"
-              >
+              <span className="flex items-center gap-1.5 text-xs font-semibold text-[#EA6A12]">
                 View Full Recipe
-                <ArrowRight className="h-4 w-4" />
-              </button>
+                <ArrowRight className="h-4 w-4" aria-hidden />
+              </span>
             </div>
           </div>
         </div>
@@ -471,7 +486,19 @@ export function RecipePreviewCard({ recipe, onExpand }: RecipePreviewCardProps) 
   }
 
   return (
-    <div className="flex items-center gap-4 rounded-xl border border-[#E2D9CC] bg-white p-3 shadow-sm">
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onExpand}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault()
+          onExpand()
+        }
+      }}
+      className="flex cursor-pointer items-center gap-4 rounded-xl border border-[#E2D9CC] bg-white p-3 shadow-sm transition-colors hover:bg-[#FAF7F0] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F97316]/50"
+      aria-label={`View full recipe: ${recipe.title}`}
+    >
       <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-lg sm:h-20 sm:w-28">
         <Image
           src={recipe.image}
@@ -512,9 +539,13 @@ export function RecipePreviewCard({ recipe, onExpand }: RecipePreviewCardProps) 
           )}
         </div>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex shrink-0 items-center gap-2">
         <button
-          onClick={() => setIsFavorited(!isFavorited)}
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            setIsFavorited(!isFavorited)
+          }}
           className="rounded-lg border border-[#E2D9CC] p-1.5 hover:bg-[#E4ECD4]"
           aria-label={isFavorited ? "Remove from favorites" : "Save to favorites"}
         >
@@ -525,12 +556,12 @@ export function RecipePreviewCard({ recipe, onExpand }: RecipePreviewCardProps) 
             )}
           />
         </button>
-        <button
-          onClick={onExpand}
-          className="rounded-lg border border-[#E2D9CC] p-1.5 hover:bg-[#E4ECD4]"
+        <span
+          className="inline-flex rounded-lg border border-[#E2D9CC] p-1.5 text-[#4F6B1F]"
+          aria-hidden
         >
-          <ChevronDown className="h-4 w-4 text-[#4F6B1F]" />
-        </button>
+          <ChevronDown className="h-4 w-4" />
+        </span>
       </div>
     </div>
   )
