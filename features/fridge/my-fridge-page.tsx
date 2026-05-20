@@ -38,6 +38,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
+import { isAbortError } from "@/lib/abort"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/features/auth/context/auth-context"
 import type { FridgeCategory } from "@/features/fridge/categorize-ingredient"
@@ -328,7 +329,7 @@ export function MyFridgePage() {
         toast.message("No ingredients were found in those images.")
       }
     } catch (err) {
-      if (controller.signal.aborted) {
+      if (controller.signal.aborted || isAbortError(err)) {
         toast.message("Detection stopped.")
         return
       }

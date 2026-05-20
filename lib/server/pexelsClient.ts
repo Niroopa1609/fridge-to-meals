@@ -12,7 +12,8 @@ function fallbackImage(): string {
 export async function findRecipeImageMeta(
   dishName: string,
   cuisine: string,
-  mealType: string
+  mealType: string,
+  signal?: AbortSignal
 ): Promise<PexelImageMeta> {
   const apiKey = process.env.PEXELS_API_KEY?.trim()
   if (!apiKey) {
@@ -23,6 +24,7 @@ export async function findRecipeImageMeta(
   try {
     const res = await fetch(`https://api.pexels.com/v1/search?${params.toString()}`, {
       headers: { Authorization: apiKey },
+      signal,
     })
     if (!res.ok) {
       return { imageUrl: fallbackImage(), imageAlt: "", photographer: "", photographerUrl: "" }
@@ -47,7 +49,12 @@ export async function findRecipeImageMeta(
   }
 }
 
-export async function findRecipeImageUrl(dishName: string, cuisine: string, mealType: string): Promise<string> {
-  const m = await findRecipeImageMeta(dishName, cuisine, mealType)
+export async function findRecipeImageUrl(
+  dishName: string,
+  cuisine: string,
+  mealType: string,
+  signal?: AbortSignal
+): Promise<string> {
+  const m = await findRecipeImageMeta(dishName, cuisine, mealType, signal)
   return m.imageUrl || fallbackImage()
 }

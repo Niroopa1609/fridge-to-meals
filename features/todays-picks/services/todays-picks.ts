@@ -7,12 +7,17 @@ export type TodayPicksResponse = {
   warnings: string[]
 }
 
-export async function fetchTodayPicks(accessToken: string, refresh: boolean): Promise<TodayPicksResponse> {
+export async function fetchTodayPicks(
+  accessToken: string,
+  refresh: boolean,
+  signal?: AbortSignal
+): Promise<TodayPicksResponse> {
   const requestId = getRequestId()
   if (refresh) {
     const { res } = await apiFetch("/api/recipes/today/refresh", {
       method: "POST",
       headers: { Authorization: `Bearer ${accessToken}` },
+      signal,
       requestId,
       safeLogFields: { refresh: 1 },
     })
@@ -25,6 +30,7 @@ export async function fetchTodayPicks(accessToken: string, refresh: boolean): Pr
   const { res } = await apiFetch("/api/recipes/today", {
     method: "GET",
     headers: { Authorization: `Bearer ${accessToken}` },
+    signal,
     requestId,
     safeLogFields: { refresh: 0 },
   })

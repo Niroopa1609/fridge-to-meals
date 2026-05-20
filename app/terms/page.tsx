@@ -3,8 +3,9 @@ import { Suspense } from "react"
 import { TermsHubPage } from "@/features/terms/terms-hub-page"
 
 export const metadata: Metadata = {
-  title: "Terms | Fridge To Meals",
+  title: "Terms",
   description: "About Fridge To Meals, terms of use, privacy, and support.",
+  alternates: { canonical: "/terms" },
 }
 
 export default function TermsRoutePage() {

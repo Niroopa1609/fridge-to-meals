@@ -49,7 +49,7 @@ function extractAssistantText(response: Record<string, unknown>): string {
   return String(textObj)
 }
 
-export async function generateJsonText(prompt: string): Promise<string> {
+export async function generateJsonText(prompt: string, signal?: AbortSignal): Promise<string> {
   const { apiKey, baseUrl, model } = getOpenAiConfig()
   const body: ResponsesBody = {
     model,
@@ -62,6 +62,7 @@ export async function generateJsonText(prompt: string): Promise<string> {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(body),
+    signal,
   })
   if (!res.ok) {
     const t = await res.text().catch(() => "")
@@ -71,7 +72,11 @@ export async function generateJsonText(prompt: string): Promise<string> {
   return extractAssistantText(json)
 }
 
-export async function generateJsonTextFromImages(userInstruction: string, imageDataUrls: string[]): Promise<string> {
+export async function generateJsonTextFromImages(
+  userInstruction: string,
+  imageDataUrls: string[],
+  signal?: AbortSignal
+): Promise<string> {
   const { apiKey, baseUrl, model } = getOpenAiConfig()
   const content: Record<string, unknown>[] = [
     { type: "input_text", text: userInstruction ?? "" },
@@ -96,6 +101,7 @@ export async function generateJsonTextFromImages(userInstruction: string, imageD
       "Content-Type": "application/json",
     },
     body: JSON.stringify(body),
+    signal,
   })
   if (!res.ok) {
     const t = await res.text().catch(() => "")

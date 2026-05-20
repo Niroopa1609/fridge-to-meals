@@ -1,3 +1,4 @@
+import { isAbortError, throwIfAborted } from "@/lib/abort"
 import { generateJsonTextFromImages } from "@/lib/server/openaiClient"
 
 export const MAX_IMAGES = 3
@@ -37,7 +38,10 @@ function normalizeCategory(raw: string): string {
 
 export type DetectedIngredient = { name: string; category: string; confidence?: string | null }
 
-export async function detectIngredientsFromFiles(files: File[]): Promise<{ ingredients: DetectedIngredient[] }> {
+export async function detectIngredientsFromFiles(
+  files: File[],
+  signal?: AbortSignal
+): Promise<{ ingredients: DetectedIngredient[] }> {
   if (!files.length) {
     throw new Error("Select at least one image (JPG, PNG, or WebP, up to 5 MB each, max 3 images).")
   }
@@ -47,6 +51,7 @@ export async function detectIngredientsFromFiles(files: File[]): Promise<{ ingre
 
   const dataUrls: string[] = []
   for (let i = 0; i < files.length; i++) {
+    throwIfAborted(signal)
     const file = files[i]!
     if (!file.size) {
       throw new Error(`Image ${i + 1} is empty. Choose a valid image file.`)
@@ -68,8 +73,9 @@ export async function detectIngredientsFromFiles(files: File[]): Promise<{ ingre
 
   let rawJson: string
   try {
-    rawJson = await generateJsonTextFromImages(PROMPT, dataUrls)
-  } catch {
+    rawJson = await generateJsonTextFromImages(PROMPT, dataUrls, signal)
+  } catch (e) {
+    if (signal?.aborted || isAbortError(e)) throw e
     throw new Error("Ingredient detection failed. Please try again in a moment.")
   }
 

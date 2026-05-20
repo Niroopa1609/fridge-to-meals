@@ -1,0 +1,25 @@
+# Fridge To Meals
+
+> Generate recipes from ingredients in your kitchen. Busy life. Meals decided.
+
+Fridge To Meals is a web app that turns fridge ingredients into meal ideas with cuisine, prep time, and cooking style filters.
+
+## Key pages
+
+- [Home / Recipe Generator](https://www.fridgetomeals.com/): Add ingredients, pick meal type, generate recipes
+- [Today's Picks](https://www.fridgetomeals.com/todays-picks): Daily meal suggestions
+- [My Fridge](https://www.fridgetomeals.com/my-fridge): Save pantry ingredients
+- [Favorites](https://www.fridgetomeals.com/favorites): Saved recipes
+- [Terms & About](https://www.fridgetomeals.com/terms): Product info, privacy, terms
+
+## Features
+
+- Ingredient-based recipe generation
+- Meal type filters (breakfast, lunch, dinner, dessert, and more)
+- Cuisine, prep time, and cooking style preferences
+- Saved favorites and fridge inventory for signed-in users
+
+## Optional
+
+- [Sitemap](https://www.fridgetomeals.com/sitemap.xml)
+- [Web app manifest](https://www.fridgetomeals.com/manifest.webmanifest)

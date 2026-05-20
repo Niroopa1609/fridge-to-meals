@@ -7,6 +7,7 @@
  */
 import { createHash } from "crypto"
 import type { SupabaseClient } from "@supabase/supabase-js"
+import { throwIfAborted } from "@/lib/abort"
 import { generateJsonText } from "@/lib/server/openaiClient"
 import { findRecipeImageMeta } from "@/lib/server/pexelsClient"
 import { parseRecipeResponseJson } from "@/lib/server/recipeParser"
@@ -478,8 +479,10 @@ function mapLooseToTodayPick(obj: Record<string, unknown>): TodayPickRecipeOut {
 
 async function enrichSingle(
   r: TodayPickRecipeOut,
-  preferredCuisines: string[]
+  preferredCuisines: string[],
+  signal?: AbortSignal
 ): Promise<TodayPickRecipeOut> {
+  throwIfAborted(signal)
   const hasImg =
     r.imageUrl &&
     r.imageUrl.trim() &&
@@ -487,7 +490,7 @@ async function enrichSingle(
   if (hasImg) return r
   const cuisine = cuisineForMeal(r.mealType, preferredCuisines)
   const mealType = r.mealType || ""
-  const img = await findRecipeImageMeta(r.title, cuisine, mealType)
+  const img = await findRecipeImageMeta(r.title, cuisine, mealType, signal)
   let imageUrl = img.imageUrl
   if (!imageUrl?.trim() || imageUrl === "/images/default-food.jpg") {
     imageUrl = fallbackImageForMeal(mealType)
@@ -503,18 +506,24 @@ async function enrichSingle(
 
 async function enrichRecipes(
   recipes: unknown[],
-  preferredCuisines: string[]
+  preferredCuisines: string[],
+  signal?: AbortSignal
 ): Promise<TodayPickRecipeOut[]> {
   const out: TodayPickRecipeOut[] = []
   for (const obj of recipes) {
+    throwIfAborted(signal)
     if (!obj || typeof obj !== "object") continue
     const r = mapLooseToTodayPick(obj as Record<string, unknown>)
-    out.push(await enrichSingle(r, preferredCuisines))
+    out.push(await enrichSingle(r, preferredCuisines, signal))
   }
   return out
 }
 
-async function enrichFromRecipesList(recipes: BackendRecipe[], preferredCuisines: string[]): Promise<TodayPickRecipeOut[]> {
+async function enrichFromRecipesList(
+  recipes: BackendRecipe[],
+  preferredCuisines: string[],
+  signal?: AbortSignal
+): Promise<TodayPickRecipeOut[]> {
   const mapped: TodayPickRecipeOut[] = recipes.map((r) =>
     mapLooseToTodayPick({
       ...r,
@@ -526,7 +535,8 @@ async function enrichFromRecipesList(recipes: BackendRecipe[], preferredCuisines
   )
   const result: TodayPickRecipeOut[] = []
   for (const m of mapped) {
-    result.push(await enrichSingle(m, preferredCuisines))
+    throwIfAborted(signal)
+    result.push(await enrichSingle(m, preferredCuisines, signal))
   }
   return result
 }
@@ -534,9 +544,11 @@ async function enrichFromRecipesList(recipes: BackendRecipe[], preferredCuisines
 export async function getTodayPicks(
   supabase: SupabaseClient,
   userId: string,
-  refresh: boolean
+  refresh: boolean,
+  signal?: AbortSignal
 ): Promise<TodayPicksResponseOut> {
   const pickDate = new Date().toISOString().slice(0, 10)
+  throwIfAborted(signal)
 
   const { data: fridgeRows, error: fridgeErr } = await supabase
     .from("fridge_items")
@@ -609,27 +621,31 @@ export async function getTodayPicks(
   }
 
   const prompt = buildTodayPicksPrompt(grouped, chosenByMeal, preferredCuisines, avoidTitles, variationToken)
-  const jsonText = await generateJsonText(prompt)
+  const jsonText = await generateJsonText(prompt, signal)
+  throwIfAborted(signal)
 
   let response: TodayPicksResponseOut
   try {
     response = JSON.parse(jsonText) as TodayPicksResponseOut
     response = {
-      recipes: await enrichRecipes(response.recipes || [], preferredCuisines),
+      recipes: await enrichRecipes(response.recipes || [], preferredCuisines, signal),
       warnings: mergeWarnings(warnings, response.warnings),
     }
   } catch {
+    throwIfAborted(signal)
     try {
       const parsed = parseRecipeResponseJson(jsonText)
       response = {
-        recipes: await enrichFromRecipesList(parsed.recipes, preferredCuisines),
+        recipes: await enrichFromRecipesList(parsed.recipes, preferredCuisines, signal),
         warnings,
       }
     } catch {
+      throwIfAborted(signal)
       throw new Error("Failed to generate today's picks.")
     }
   }
 
+  throwIfAborted(signal)
   const normalized = normalizeResponse(response)
 
   const used = extractUsedIngredients(chosenByMeal)

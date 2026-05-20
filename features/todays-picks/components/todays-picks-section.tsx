@@ -1,6 +1,7 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { isAbortError } from "@/lib/abort"
 import { Pencil, Sparkles } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -44,6 +45,7 @@ export function TodaysPicksSection({ className }: { className?: string }) {
   const [prefsOpen, setPrefsOpen] = useState(false)
   const [prefsDraft, setPrefsDraft] = useState<string[]>([])
   const [prefsSaving, setPrefsSaving] = useState(false)
+  const todayPicksAbortRef = useRef<AbortController | null>(null)
 
   const canUse = Boolean(isHydrated && user && accessToken)
 
@@ -52,15 +54,20 @@ export function TodaysPicksSection({ className }: { className?: string }) {
   const load = useCallback(
     async (opts: { refresh: boolean }) => {
       if (!canUse) return
+      todayPicksAbortRef.current?.abort()
+      const controller = new AbortController()
+      todayPicksAbortRef.current = controller
       setTodayPicks({ error: null, loading: true })
       try {
         const items = await fetchFridgeItems(accessToken!)
+        if (controller.signal.aborted) return
         setTodayPicks({ fridgeCount: items.length })
         if (items.length === 0) {
           setTodayPicks({ recipes: [], warnings: [], hasLoaded: true })
           return
         }
-        const res = await fetchTodayPicks(accessToken!, opts.refresh)
+        const res = await fetchTodayPicks(accessToken!, opts.refresh, controller.signal)
+        if (controller.signal.aborted) return
         const next = Array.isArray(res.recipes) ? res.recipes.map(normalizeBackendRecipe) : []
         setTodayPicks({
           recipes: next,
@@ -68,16 +75,24 @@ export function TodaysPicksSection({ className }: { className?: string }) {
           hasLoaded: true,
         })
       } catch (e) {
+        if (isAbortError(e) || controller.signal.aborted) return
         setTodayPicks({
           error: e instanceof Error ? e.message : "Could not load today's picks.",
           hasLoaded: true,
         })
       } finally {
+        if (todayPicksAbortRef.current === controller) {
+          todayPicksAbortRef.current = null
+        }
         setTodayPicks({ loading: false })
       }
     },
     [accessToken, canUse, setTodayPicks]
   )
+
+  useEffect(() => {
+    return () => todayPicksAbortRef.current?.abort()
+  }, [])
 
   const loadPreferences = useCallback(async () => {
     if (!canUse) return

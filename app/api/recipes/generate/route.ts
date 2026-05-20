@@ -1,20 +1,29 @@
 import { NextResponse } from "next/server"
+import { throwIfAborted } from "@/lib/abort"
 import { generateJsonText } from "@/lib/server/openaiClient"
 import { buildRecipeGeneratePrompt } from "@/lib/server/recipePromptBuilder"
 import { parseRecipeResponseJson } from "@/lib/server/recipeParser"
 import { findRecipeImageUrl } from "@/lib/server/pexelsClient"
+import { abortAwareCatch, abortedResponse } from "@/lib/server/route-abort"
 import type { BackendRecipe, RecipeGeneratorPayload } from "@/features/recipe-generator/types"
 
 export const runtime = "nodejs"
 
-async function enrichSingle(recipe: BackendRecipe, request: RecipeGeneratorPayload): Promise<BackendRecipe> {
-  const imageUrl = await findRecipeImageUrl(recipe.title, request.cuisine || "any", recipe.mealType)
+async function enrichSingle(
+  recipe: BackendRecipe,
+  request: RecipeGeneratorPayload,
+  signal?: AbortSignal
+): Promise<BackendRecipe> {
+  throwIfAborted(signal)
+  const imageUrl = await findRecipeImageUrl(recipe.title, request.cuisine || "any", recipe.mealType, signal)
   return { ...recipe, image: imageUrl }
 }
 
 export async function POST(req: Request) {
+  const signal = req.signal
   try {
     const body = (await req.json()) as RecipeGeneratorPayload
+    throwIfAborted(signal)
     const ingredients = Array.isArray(body.ingredients) ? body.ingredients : []
     const mealTypes = Array.isArray(body.mealTypes) ? body.mealTypes : []
     if (!ingredients.length || !mealTypes.length) {
@@ -28,7 +37,8 @@ export async function POST(req: Request) {
       mealTypes,
     }
     const prompt = buildRecipeGeneratePrompt(request)
-    const jsonText = await generateJsonText(prompt)
+    const jsonText = await generateJsonText(prompt, signal)
+    throwIfAborted(signal)
     const parsed = parseRecipeResponseJson(jsonText)
     const expected = mealTypes.length * 2
     if (expected > 0 && parsed.recipes.length !== expected) {
@@ -36,10 +46,15 @@ export async function POST(req: Request) {
     }
     const recipes: BackendRecipe[] = []
     for (const r of parsed.recipes) {
-      recipes.push(await enrichSingle(r, request))
+      throwIfAborted(signal)
+      recipes.push(await enrichSingle(r, request, signal))
     }
+    if (signal.aborted) return abortedResponse()
     return NextResponse.json({ recipes })
   } catch (e) {
+    const aborted = abortAwareCatch(e)
+    if (aborted) return aborted
+    if (signal.aborted) return abortedResponse()
     const msg = e instanceof Error ? e.message : "Generation failed"
     return NextResponse.json({ error: msg }, { status: 502 })
   }

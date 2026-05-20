@@ -6,6 +6,7 @@ import type { RecipeGeneratorFormState, UiRecipe } from "@/features/recipe-gener
 import { getMealTypeApiValues } from "@/features/recipe-generator/constants"
 import { generateRecipes } from "@/features/recipe-generator/services/recipes"
 import { normalizeBackendRecipe } from "@/features/recipe-generator/services/recipe-mappers"
+import { isAbortError } from "@/lib/abort"
 import { getRequestId } from "@/lib/request-id"
 import { logError, logInfo } from "@/lib/logger"
 
@@ -79,12 +80,6 @@ type RecipesContextValue = {
 }
 
 const RecipesContext = createContext<RecipesContextValue | null>(null)
-
-function isAbortError(e: unknown): boolean {
-  if (e instanceof DOMException && e.name === "AbortError") return true
-  if (e instanceof Error && e.name === "AbortError") return true
-  return false
-}
 
 export function RecipesStateProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState)
