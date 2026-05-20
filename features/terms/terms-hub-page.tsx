@@ -9,8 +9,7 @@ import { MobileNav } from "@/components/mobile-nav"
 import { DecorativeLeaves } from "@/features/recipe-generator/components/decorative-leaves"
 import { cn } from "@/lib/utils"
 
-//const SUPPORT = "support@fridgetomeals.com"
-const SUPPORT = " "
+const SUPPORT = "support@fridgetomeals.com"
 export type LegalPanelId = "about" | "terms" | "privacy" | "contact"
 
 const OPEN_PARAM_KEYS: Record<string, LegalPanelId | null> = {
