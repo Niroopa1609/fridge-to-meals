@@ -43,3 +43,50 @@ JSON format:
 }
 `
 }
+
+export function buildPartialRecipeGeneratePrompt(
+  request: RecipeGeneratorPayload,
+  gaps: { mealType: string; needed: number }[]
+): string {
+  const gapDesc = gaps.map((g) => `${g.needed} for ${g.mealType}`).join(", ")
+  return `You are generating recipes for a meal planner app.
+
+Generate ONLY the missing recipes: ${gapDesc}.
+Each recipe's mealType MUST match the meal type requested in the gap list above.
+Do NOT duplicate titles from existing catalog suggestions.
+
+User input:
+Ingredients: ${JSON.stringify(request.ingredients)}
+Cuisine: ${request.cuisine}
+Prep time: ${request.mealPrepTime}
+Cooking style: ${request.cookingStyle}
+
+Return ONLY valid JSON. No markdown.
+
+JSON format:
+{
+  "recipes": [
+    {
+      "id": "recipe-1",
+      "title": "Recipe name",
+      "image": "https://images.unsplash.com/...w=800&h=600&fit=crop",
+      "mealType": "Breakfast",
+      "difficulty": "EASY",
+      "time": "30 minutes",
+      "servings": 2,
+      "isVegetarian": false,
+      "description": "1-2 sentences.",
+      "ingredients": ["item 1", "item 2"],
+      "instructions": ["step 1", "step 2"],
+      "proTips": ["tip 1"],
+      "nutrition": {
+        "calories": 250,
+        "protein": "15g",
+        "carbs": "30g",
+        "fat": "8g"
+      }
+    }
+  ]
+}
+`
+}

@@ -37,8 +37,16 @@ export type BackendRecipe = {
   }
 }
 
+export type RecipeGenerationMeta = {
+  catalogCount: number
+  aiCount: number
+  source: "catalog" | "mixed" | "ai"
+  catalogHitPercent: number
+}
+
 export type GenerateRecipesResponse = {
   recipes: BackendRecipe[]
+  meta?: RecipeGenerationMeta
 }
 
 export type UiRecipe = Recipe

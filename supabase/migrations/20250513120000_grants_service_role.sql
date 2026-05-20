@@ -11,3 +11,5 @@ GRANT ALL ON TABLE public.favorite_recipes TO service_role;
 GRANT ALL ON TABLE public.refresh_tokens TO service_role;
 GRANT ALL ON TABLE public.today_picks_cache TO service_role;
 GRANT ALL ON TABLE public.user_preferences TO service_role;
+GRANT ALL ON TABLE public.catalog_recipes TO service_role;
+GRANT ALL ON TABLE public.catalog_recipe_ingredients TO service_role;

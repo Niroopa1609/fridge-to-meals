@@ -9,6 +9,9 @@
     "start": "next start",
     "lint": "eslint .",
     "db:password-reset-table": "node scripts/apply-password-reset-table.mjs",
+    "db:seed-catalog": "node scripts/seed-catalog-recipes.mjs",
+    "db:seed-catalog:cuisine": "node scripts/seed-catalog-recipes.mjs --cuisine=Indian --count=100",
+    "db:import-catalog-indian": "node scripts/import-catalog-from-ai.mjs --cuisine=Indian --replace --preset=indian",
     "generate:pwa-icons": "node scripts/generate-pwa-icons.mjs"
   },
   "dependencies": {

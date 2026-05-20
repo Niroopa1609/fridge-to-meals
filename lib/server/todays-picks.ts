@@ -11,6 +11,11 @@ import { throwIfAborted } from "@/lib/abort"
 import { generateJsonText } from "@/lib/server/openaiClient"
 import { findRecipeImageMeta } from "@/lib/server/pexelsClient"
 import { parseRecipeResponseJson } from "@/lib/server/recipeParser"
+import {
+  buildCatalogMeta,
+  logCatalogMetrics,
+} from "@/lib/server/recipe-catalog"
+import { findTodayPicksFromCatalog } from "@/lib/server/recipe-catalog-today"
 import type { BackendRecipe } from "@/features/recipe-generator/types"
 
 const MEALS = ["Breakfast", "Lunch", "Dinner"] as const
@@ -38,9 +43,17 @@ export type TodayPickRecipeOut = {
   photographerUrl: string
 }
 
+export type TodayPicksMeta = {
+  catalogCount: number
+  aiCount: number
+  source: "catalog" | "mixed" | "ai"
+  catalogHitPercent: number
+}
+
 export type TodayPicksResponseOut = {
   recipes: TodayPickRecipeOut[]
   warnings: string[]
+  meta?: TodayPicksMeta
 }
 
 type Grouped = Record<string, string[]>
@@ -620,6 +633,38 @@ export async function getTodayPicks(
     }
   }
 
+  const catalogAttempt = await findTodayPicksFromCatalog(
+    supabase,
+    chosenByMeal,
+    preferredCuisines,
+    avoidTitles
+  )
+
+  if (catalogAttempt.recipes.length >= 3) {
+    const meta = buildCatalogMeta(3, 0)
+    logCatalogMetrics("today-picks", meta)
+    const normalized = normalizeResponse({
+      recipes: catalogAttempt.recipes,
+      warnings,
+      meta,
+    })
+    const used = extractUsedIngredients(chosenByMeal)
+    try {
+      await supabase.from("today_picks_cache").delete().eq("user_id", userId).eq("pick_date", pickDate)
+      await supabase.from("today_picks_cache").insert({
+        id: crypto.randomUUID(),
+        user_id: userId,
+        pick_date: pickDate,
+        fridge_hash: fHash,
+        response_json: JSON.stringify(normalized),
+        used_ingredients_json: JSON.stringify(used),
+      })
+    } catch {
+      /* cache best-effort */
+    }
+    return normalized
+  }
+
   const prompt = buildTodayPicksPrompt(grouped, chosenByMeal, preferredCuisines, avoidTitles, variationToken)
   const jsonText = await generateJsonText(prompt, signal)
   throwIfAborted(signal)
@@ -647,6 +692,9 @@ export async function getTodayPicks(
 
   throwIfAborted(signal)
   const normalized = normalizeResponse(response)
+  const aiMeta = buildCatalogMeta(catalogAttempt.catalogCount, normalized.recipes.length)
+  logCatalogMetrics("today-picks", aiMeta)
+  const withMeta: TodayPicksResponseOut = { ...normalized, meta: aiMeta }
 
   const used = extractUsedIngredients(chosenByMeal)
   try {
@@ -656,12 +704,12 @@ export async function getTodayPicks(
       user_id: userId,
       pick_date: pickDate,
       fridge_hash: fHash,
-      response_json: JSON.stringify(normalized),
+      response_json: JSON.stringify(withMeta),
       used_ingredients_json: JSON.stringify(used),
     })
   } catch {
     /* cache best-effort */
   }
 
-  return normalized
+  return withMeta
 }
