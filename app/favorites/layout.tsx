@@ -3,7 +3,8 @@ import type { ReactNode } from "react"
 
 export const metadata: Metadata = {
   title: "Favorites",
-  description: "Your saved recipes from Fridge To Meals.",
+  description:
+    "Save your best dinner recipes, weeknight meals, and go-to home cooking ideas.",
   alternates: { canonical: "/favorites" },
 }
 

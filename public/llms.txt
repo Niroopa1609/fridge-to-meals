@@ -1,21 +1,29 @@
 # Fridge To Meals
 
-> Generate recipes from ingredients in your kitchen. Busy life. Meals decided.
+> Recipe generator and meal planner from fridge and pantry ingredients. Busy life. Meals decided.
 
-Fridge To Meals is a web app that turns fridge ingredients into meal ideas with cuisine, prep time, and cooking style filters.
+Fridge To Meals is a web app for home cooking that turns what you have into meal ideas—dinner, lunch, breakfast, and weeknight meals—with cuisine, prep time, and cooking style filters.
 
 ## Key pages
 
 - [Home / Recipe Generator](https://www.fridgetomeals.com/): Add ingredients, pick meal type, generate recipes
-- [Today's Picks](https://www.fridgetomeals.com/todays-picks): Daily meal suggestions
-- [My Fridge](https://www.fridgetomeals.com/my-fridge): Save pantry ingredients
-- [Favorites](https://www.fridgetomeals.com/favorites): Saved recipes
+- [Today's Picks](https://www.fridgetomeals.com/todays-picks): Daily what-to-cook suggestions
+- [My Fridge](https://www.fridgetomeals.com/my-fridge): Pantry and fridge inventory
+- [Favorites](https://www.fridgetomeals.com/favorites): Saved dinner and lunch recipes
 - [Terms & About](https://www.fridgetomeals.com/terms): Product info, privacy, terms
+
+## Search topics
+
+recipe generator, what to cook tonight, dinner ideas from ingredients, meal planner, pantry cooking, fridge ingredients, home cooking, weeknight dinner, quick meals, lunch ideas, breakfast recipes, leftover meals, cuisine filters, meal prep time, cooking style
+
+## Popular meal ideas
+
+chicken pasta, egg omelette, shrimp curry, fried rice, pasta salad, chicken stir fry, vegetable soup, egg fried rice, chicken soup, tacos, pancakes, tomato pasta, scrambled eggs
 
 ## Features
 
 - Ingredient-based recipe generation
-- Meal type filters (breakfast, lunch, dinner, dessert, and more)
+- Meal type filters (breakfast, lunch, dinner, soup, salad, dessert, and more)
 - Cuisine, prep time, and cooking style preferences
 - Saved favorites and fridge inventory for signed-in users
 

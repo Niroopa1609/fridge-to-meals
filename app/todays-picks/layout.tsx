@@ -3,7 +3,8 @@ import type { ReactNode } from "react"
 
 export const metadata: Metadata = {
   title: "Today's Picks",
-  description: "Daily meal suggestions based on your fridge and preferences.",
+  description:
+    "Daily dinner and lunch ideas from your fridge—what to cook today without the guesswork.",
   alternates: { canonical: "/todays-picks" },
 }
 

@@ -4,7 +4,8 @@ import { TermsHubPage } from "@/features/terms/terms-hub-page"
 
 export const metadata: Metadata = {
   title: "Terms",
-  description: "About Fridge To Meals, terms of use, privacy, and support.",
+  description:
+    "About Fridge To Meals meal planner and recipe generator, terms of use, privacy, and support.",
   alternates: { canonical: "/terms" },
 }
 

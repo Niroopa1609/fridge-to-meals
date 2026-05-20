@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Fridge To Meals",
     short_name: "Fridge To Meals",
     description:
-      "Generate delicious recipes from the ingredients in your kitchen. Busy life. Meals decided.",
+      "Recipe generator and meal planner from fridge ingredients—dinner ideas, weeknight meals, home cooking. Busy life. Meals decided.",
     start_url: "/",
     scope: "/",
     display: "standalone",

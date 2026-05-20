@@ -8,7 +8,13 @@ import { StructuredData } from "@/components/structured-data"
 import { Toaster } from "@/components/ui/sonner"
 import { OnboardingGate } from "@/components/onboarding-gate"
 import { ServiceWorkerRegister } from "@/components/service-worker-register"
-import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE } from "@/lib/site-metadata"
+import {
+  SITE_DESCRIPTION,
+  SITE_DESCRIPTION_LONG,
+  SITE_KEYWORDS,
+  SITE_NAME,
+  SITE_TAGLINE,
+} from "@/lib/site-metadata"
 import { getSiteUrl } from "@/lib/site-url"
 import './globals.css'
 
@@ -42,6 +48,7 @@ export const metadata: Metadata = {
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
+  keywords: SITE_KEYWORDS,
   applicationName: SITE_NAME,
   alternates: {
     canonical: "/",
@@ -52,7 +59,7 @@ export const metadata: Metadata = {
     url: siteUrl,
     siteName: SITE_NAME,
     title: defaultTitle,
-    description: SITE_DESCRIPTION,
+    description: SITE_DESCRIPTION_LONG,
     images: [
       {
         url: "/icons/icon-512.png",
@@ -65,7 +72,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: defaultTitle,
-    description: SITE_DESCRIPTION,
+    description: SITE_DESCRIPTION_LONG,
     images: ["/icons/icon-512.png"],
   },
   appleWebApp: {

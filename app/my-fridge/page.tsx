@@ -3,7 +3,8 @@ import { MyFridgePage } from "@/features/fridge/my-fridge-page"
 
 export const metadata: Metadata = {
   title: "My Fridge",
-  description: "Save and manage ingredients in your pantry for faster recipe ideas.",
+  description:
+    "Pantry and fridge inventory for home cooks—save ingredients and get recipes that use what you have.",
   alternates: { canonical: "/my-fridge" },
 }
 
