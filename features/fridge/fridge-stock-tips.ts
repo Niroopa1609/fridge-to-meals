@@ -32,12 +32,12 @@ export function fridgeStockTips(items: NamedItem[]): string[] {
   }
   const proteinTotal = proteinCategoryCount + dairyProteinCount
 
-  if (vegetableCount < 6) {
+  if (vegetableCount < 5) {
     tips.push(
       "Your fridge is light on vegetables. Add a few more in My Fridge—like spinach, tomatoes, onions, or peppers—for more varied daily meal ideas."
     )
   }
-  if (proteinTotal < 3) {
+  if (proteinTotal < 2) {
     tips.push(
       "Your fridge is light on protein. Add items such as eggs, chicken, lentils, beans, paneer, or tofu in My Fridge so we can suggest balanced meals across the day."
     )
