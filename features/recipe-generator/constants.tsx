@@ -8,6 +8,9 @@ export type MealTypeOption = {
   emoji: string
 }
 
+/** Recipe ideas generated per selected meal type (e.g. 1 type → 2 recipes). */
+export const RECIPES_PER_MEAL_TYPE = 2
+
 export const MEAL_TYPES: MealTypeOption[] = [
   { id: "soup", name: "Soup", apiValue: "Soup", emoji: "🍲" },
   { id: "salad", name: "Salad", apiValue: "Salad", emoji: "🥗" },

@@ -26,14 +26,14 @@ const DAIRY = new RegExp(
     "milk|whole milk|skim milk|almond milk|soy milk|oat milk|coconut milk|" +
     "cheese|mozzarella|cheddar|parmesan|ricotta|cream cheese|feta|goat cheese|" +
     "yogurt|greek yogurt|yoghurt|curd|cream|heavy cream|sour cream|butter|ghee|" +
-    "paneer|labneh|kefir" +
+    "labneh|kefir" +
   ")\\b",
   "i"
 );
 
 const PROTEIN = new RegExp(
   "\\b(" +
-    "egg|eggs|chicken|beef|steak|pork|bacon|ham|sausage|turkey|duck|lamb|mutton|" +
+    "egg|eggs|chicken|paneer|beef|steak|pork|bacon|ham|sausage|turkey|duck|lamb|mutton|" +
     "fish|salmon|tuna|cod|tilapia|shrimp|prawn|crab|lobster|scallop|anchovy|" +
     "tofu|tempeh|seitan|lentil|lentils|dal|dhal|toor dal|moong dal|masoor dal|" +
     "urad dal|chana dal|chickpea|garbanzo|rajma|kidney bean|black bean|white bean|" +

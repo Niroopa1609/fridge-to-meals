@@ -9,12 +9,18 @@ import type { BackendRecipe, RecipeGeneratorPayload } from "@/features/recipe-ge
 
 export const runtime = "nodejs"
 
+function hasUsableImage(image: string | undefined): boolean {
+  const url = image?.trim() || ""
+  return Boolean(url && url !== "/images/default-food.jpg")
+}
+
 async function enrichSingle(
   recipe: BackendRecipe,
   request: RecipeGeneratorPayload,
   signal?: AbortSignal
 ): Promise<BackendRecipe> {
   throwIfAborted(signal)
+  if (hasUsableImage(recipe.image)) return recipe
   const imageUrl = await findRecipeImageUrl(recipe.title, request.cuisine || "any", recipe.mealType, signal)
   return { ...recipe, image: imageUrl }
 }
@@ -40,15 +46,18 @@ export async function POST(req: Request) {
     const jsonText = await generateJsonText(prompt, signal)
     throwIfAborted(signal)
     const parsed = parseRecipeResponseJson(jsonText)
-    const expected = mealTypes.length * 2
+    const recipesPerMealType = 2
+    const expected = mealTypes.length * recipesPerMealType
     if (expected > 0 && parsed.recipes.length !== expected) {
-      return NextResponse.json({ error: "Unexpected recipe count from model" }, { status: 502 })
+      return NextResponse.json(
+        {
+          error: `Expected ${expected} recipe(s) (${recipesPerMealType} per meal type), got ${parsed.recipes.length}`,
+        },
+        { status: 502 }
+      )
     }
-    const recipes: BackendRecipe[] = []
-    for (const r of parsed.recipes) {
-      throwIfAborted(signal)
-      recipes.push(await enrichSingle(r, request, signal))
-    }
+    throwIfAborted(signal)
+    const recipes = await Promise.all(parsed.recipes.map((r) => enrichSingle(r, request, signal)))
     if (signal.aborted) return abortedResponse()
     return NextResponse.json({ recipes })
   } catch (e) {

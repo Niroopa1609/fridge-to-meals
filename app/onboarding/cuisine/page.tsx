@@ -6,7 +6,7 @@ import { toast } from "sonner"
 import { Leaf } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/features/auth/context/auth-context"
-import { saveUserPreferences } from "@/features/user-preferences/services/user-preferences"
+import { usePreferencesCache } from "@/features/user-preferences/context/preferences-cache-context"
 import { CuisinePicker } from "@/features/user-preferences/components/cuisine-picker"
 
 const MAX = 3
@@ -14,6 +14,7 @@ const MAX = 3
 export default function CuisineOnboardingPage() {
   const router = useRouter()
   const { isHydrated, user, accessToken } = useAuth()
+  const { savePreferences } = usePreferencesCache()
 
   const [selected, setSelected] = useState<string[]>([])
   const [isSaving, setIsSaving] = useState(false)
@@ -38,7 +39,7 @@ export default function CuisineOnboardingPage() {
     if (!accessToken) return
     setIsSaving(true)
     try {
-      await saveUserPreferences(accessToken, prefs)
+      await savePreferences(prefs)
       router.replace("/")
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not save preferences.")

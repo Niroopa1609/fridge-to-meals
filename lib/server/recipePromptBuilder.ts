@@ -1,45 +1,31 @@
 import type { RecipeGeneratorPayload } from "@/features/recipe-generator/types"
 
+const RECIPES_PER_MEAL_TYPE = 2
+
 export function buildRecipeGeneratePrompt(request: RecipeGeneratorPayload): string {
-  return `You are generating recipes for a meal planner app.
+  const mealCount = request.mealTypes.length
+  const totalRecipes = mealCount * RECIPES_PER_MEAL_TYPE
+  const perTypeHint =
+    mealCount === 1
+      ? `Generate exactly ${totalRecipes} recipes for the selected meal type.`
+      : `Generate exactly ${totalRecipes} recipes (${RECIPES_PER_MEAL_TYPE} per meal type).`
+  return `${perTypeHint} Return ONLY valid JSON.
 
-Generate exactly 2 recipes PER meal type provided by the user.
-If the user provides N meal types, return exactly N*2 recipes total.
-Each recipe's mealType MUST be one of the provided meal types.
-
-User input:
+Meal types (each recipe mealType must be one of these): ${JSON.stringify(request.mealTypes)}
 Ingredients: ${JSON.stringify(request.ingredients)}
-Cuisine: ${request.cuisine}
-Prep time: ${request.mealPrepTime}
-Meal types: ${JSON.stringify(request.mealTypes)}
-Cooking style: ${request.cookingStyle}
+Cuisine: ${request.cuisine ?? "any"}
+Prep time: ${request.mealPrepTime ?? "any"}
+Cooking style: ${request.cookingStyle ?? "any"}
 
-Return ONLY valid JSON. No markdown.
+Rules:
+- Use listed ingredients; pantry staples (salt, oil, spices, water) are OK.
+- Do not repeat the same title across recipes.
+- Description: 1-2 sentences. Instructions: 5-7 clear steps. Pro tips: 1-2.
+- Ingredients: 6-12 lines. EVERY line MUST include quantity + unit + name (scale to servings). Format examples: "200g paneer, cubed", "2 tbsp vegetable oil", "1 medium onion, diced", "1/2 tsp salt".
+- Do not list bare ingredient names without amounts.
+- Omit "image" or use "image": "". Images are added server-side. Do not invent URLs.
 
-JSON format:
-{
-  "recipes": [
-    {
-      "id": "recipe-1",
-      "title": "Recipe name",
-      "image": "https://images.unsplash.com/...w=800&h=600&fit=crop",
-      "mealType": "Breakfast",
-      "difficulty": "EASY",
-      "time": "30 minutes",
-      "servings": 2,
-      "isVegetarian": false,
-      "description": "1-2 sentences.",
-      "ingredients": ["item 1", "item 2"],
-      "instructions": ["step 1", "step 2"],
-      "proTips": ["tip 1"],
-      "nutrition": {
-        "calories": 250,
-        "protein": "15g",
-        "carbs": "30g",
-        "fat": "8g"
-      }
-    }
-  ]
-}
+JSON shape:
+{"recipes":[{"id":"recipe-1","title":"...","mealType":"Breakfast","difficulty":"EASY","time":"30 minutes","servings":2,"isVegetarian":false,"description":"...","ingredients":["200g paneer, cubed","1 tbsp oil"],"instructions":["..."],"proTips":["..."],"nutrition":{"calories":250,"protein":"15g","carbs":"30g","fat":"8g"}}]}
 `
 }

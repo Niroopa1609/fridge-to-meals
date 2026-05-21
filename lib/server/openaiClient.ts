@@ -54,6 +54,8 @@ export async function generateJsonText(prompt: string, signal?: AbortSignal): Pr
   const body: ResponsesBody = {
     model,
     input: prompt ?? "",
+    store: false,
+    text: { format: { type: "json_object" } },
   }
   const res = await fetch(`${baseUrl}/v1/responses`, {
     method: "POST",

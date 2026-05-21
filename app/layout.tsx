@@ -3,6 +3,8 @@ import type { ReactNode } from "react"
 import { Caveat, Geist, Geist_Mono, Playfair_Display } from 'next/font/google'
 import { Analytics } from "@vercel/analytics/react"
 import { AuthProvider } from "@/features/auth/context/auth-context"
+import { FridgeCacheProvider } from "@/features/fridge/context/fridge-cache-context"
+import { PreferencesCacheProvider } from "@/features/user-preferences/context/preferences-cache-context"
 import { RecipesStateProvider } from "@/features/recipes/state/recipes-state"
 import { StructuredData } from "@/components/structured-data"
 import { Toaster } from "@/components/ui/sonner"
@@ -116,10 +118,14 @@ export default function RootLayout({
       >
         <StructuredData />
         <AuthProvider>
-          <RecipesStateProvider>
-            <OnboardingGate />
-            {children}
-          </RecipesStateProvider>
+          <FridgeCacheProvider>
+            <PreferencesCacheProvider>
+              <RecipesStateProvider>
+                <OnboardingGate />
+                {children}
+              </RecipesStateProvider>
+            </PreferencesCacheProvider>
+          </FridgeCacheProvider>
         </AuthProvider>
         <Toaster />
         <ServiceWorkerRegister />

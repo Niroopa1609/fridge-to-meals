@@ -11,6 +11,7 @@ import { throwIfAborted } from "@/lib/abort"
 import { generateJsonText } from "@/lib/server/openaiClient"
 import { findRecipeImageMeta } from "@/lib/server/pexelsClient"
 import { parseRecipeResponseJson } from "@/lib/server/recipeParser"
+import { fridgeStockTipsFromGrouped } from "@/features/fridge/fridge-stock-tips"
 import type { BackendRecipe } from "@/features/recipe-generator/types"
 
 const MEALS = ["Breakfast", "Lunch", "Dinner"] as const
@@ -282,12 +283,7 @@ function planDistinctIngredients(
 }
 
 function warningsFor(grouped: Grouped): string[] {
-  const warnings: string[] = []
-  const veg = (grouped.Vegetables || []).length
-  const protein = (grouped.Proteins || []).length
-  if (veg < 2) warnings.push("Add more vegetables to improve meal suggestions.")
-  if (protein < 1) warnings.push("Add more proteins to improve meal suggestions.")
-  return warnings
+  return fridgeStockTipsFromGrouped(grouped)
 }
 
 function mergeWarnings(base: string[], extra: string[] | null | undefined): string[] {
@@ -345,83 +341,85 @@ function fallbackImageForMeal(mealType: string): string {
 }
 
 function buildTodayPicksPrompt(
-  grouped: Grouped,
   chosenByMeal: Record<string, string[]>,
   preferredCuisines: string[],
   avoidTitles: string[],
   variationToken: string
 ): string {
   const safeList = (v: string[] | undefined) => (v == null ? "[]" : JSON.stringify(v))
-  return `You are generating daily meal picks for a meal planner app.
+  return `Generate exactly 3 recipes (one Breakfast, one Lunch, one Dinner). Return ONLY valid JSON.
 
-Your task:
-- Generate EXACTLY 3 recipes total: one Breakfast, one Lunch, one Dinner.
-- Use ONLY the selected fridge ingredients provided for each meal as the main items.
-- Pantry staples (salt, oil, spices, water) can be assumed and do not need to be listed as fridge ingredients.
-- Keep recipes realistic, simple, and home-cooking friendly.
-- If ingredients are insufficient, still produce recipes using what is available and add a warning message.
-- IMPORTANT: Avoid repeating the same recipe titles. Do NOT reuse any titles from the avoid list below.
-- IMPORTANT: The three recipes must NOT reuse the same primary protein when different proteins are available.
-- IMPORTANT: The three recipes must NOT reuse the same main vegetable combination when different vegetables are available.
-- IMPORTANT: Do NOT repeat the same main ingredient set across Breakfast, Lunch, and Dinner.
-- Match ingredients naturally to the meal type (breakfast simpler, lunch/dinner heartier).
-- Prefer cuisines from the user's preferred cuisine list. Do NOT use cuisines outside that list unless no match is possible.
-- If multiple cuisines are selected, distribute cuisines across meals when it fits the ingredients.
-
-Ingredient groups from My Fridge (for context):
-Vegetables: ${safeList(grouped.Vegetables)}
-Proteins: ${safeList(grouped.Proteins)}
-Fruits: ${safeList(grouped.Fruits)}
-Dairy: ${safeList(grouped.Dairy)}
-Pantry: ${safeList(grouped.Pantry)}
-Others: ${safeList(grouped.Others)}
-
-Selected ingredients to use:
+Ingredients per meal (use ONLY that meal's list; pantry staples OK):
 Breakfast: ${safeList(chosenByMeal.Breakfast)}
 Lunch: ${safeList(chosenByMeal.Lunch)}
 Dinner: ${safeList(chosenByMeal.Dinner)}
 
-Constraints:
-- Each recipe MUST primarily use the ingredients listed for that meal.
-- Do not include the Lunch or Dinner ingredient group as the main ingredients for Breakfast, etc.
+Preferred cuisines: ${safeList(preferredCuisines)}
+Avoid titles: ${safeList(avoidTitles)}
+Variation: ${variationToken || ""}
 
-User preferred cuisines: ${safeList(preferredCuisines)}
+Rules: simple home cooking; each recipe MUST have a non-empty "title" (dish name, 3-8 words); no repeated titles; vary protein/veg across meals when possible; match meal type (lighter breakfast).
+Description: 1-2 sentences. Instructions: 5-7 clear steps. Pro tips: 1-2.
+Ingredients: 6-10 lines per recipe. EVERY line MUST include quantity + unit + name (scale to servings). Format: "200g paneer, cubed", "2 tbsp oil", "1 medium tomato, chopped". No bare names without amounts.
+Omit imageUrl or use "".
 
-Avoid titles (do not repeat): ${safeList(avoidTitles)}
-Variation token: ${variationToken || ""}
-
-Output rules:
-- Return ONLY valid JSON. No markdown.
-- Return this exact JSON shape:
-{
-  "recipes": [
-    {
-      "id": "today-breakfast",
-      "title": "Recipe name",
-      "imageUrl": "",
-      "imageAlt": "",
-      "photographer": "",
-      "photographerUrl": "",
-      "mealType": "Breakfast",
-      "difficulty": "EASY",
-      "time": "15 minutes",
-      "servings": 2,
-      "isVegetarian": false,
-      "description": "1-2 sentences.",
-      "ingredients": ["item 1", "item 2"],
-      "instructions": ["step 1", "step 2"],
-      "proTips": ["tip 1"],
-      "nutrition": { "calories": 250, "protein": "15g", "carbs": "30g", "fat": "8g" }
-    }
-  ],
-  "warnings": []
-}
+JSON: {"recipes":[{"id":"today-breakfast","title":"...","mealType":"Breakfast","difficulty":"EASY","time":"15 minutes","servings":2,"isVegetarian":false,"description":"...","ingredients":["200g paneer, cubed","1 tbsp oil"],"instructions":["..."],"proTips":["..."],"nutrition":{"calories":250,"protein":"15g","carbs":"30g","fat":"8g"}}],"warnings":[]}
 `
+}
+
+const TITLE_FIELD_KEYS = ["title", "name", "recipeName", "recipeTitle", "dishName"] as const
+
+function resolveRecipeTitleFromLoose(obj: Record<string, unknown>): string {
+  for (const key of TITLE_FIELD_KEYS) {
+    const v = obj[key]
+    if (typeof v === "string" && v.trim()) return v.trim()
+  }
+  return ""
+}
+
+function ingredientLabel(line: string): string {
+  const s = line.trim()
+  if (!s) return ""
+  const beforeComma = (s.split(",")[0] ?? s).trim()
+  const stripped = beforeComma
+    .replace(/^[\d./\s]+(?:g|kg|ml|l|cup|cups|tbsp|tsp|oz|lb|large|medium|small)?\s*/i, "")
+    .trim()
+  return stripped || beforeComma
+}
+
+function fallbackTitleForRecipe(r: TodayPickRecipeOut): string {
+  const meal = (r.mealType || "Meal").trim()
+  const label = r.ingredients?.length ? ingredientLabel(r.ingredients[0]) : ""
+  if (label) {
+    const named = label.charAt(0).toUpperCase() + label.slice(1)
+    return `${meal}: ${named}`
+  }
+  const desc = r.description?.trim()
+  if (desc) {
+    const short = desc.length > 48 ? `${desc.slice(0, 45).trim()}…` : desc
+    return `${meal}: ${short}`
+  }
+  return meal || "Today's pick"
+}
+
+function ensureRecipeTitle(r: TodayPickRecipeOut): TodayPickRecipeOut {
+  const title = r.title?.trim()
+  if (title) return { ...r, title }
+  return { ...r, title: fallbackTitleForRecipe(r) }
+}
+
+function rawRecipesMissingTitles(recipes: unknown[]): boolean {
+  if (!Array.isArray(recipes) || recipes.length === 0) return false
+  for (const obj of recipes) {
+    if (!obj || typeof obj !== "object") continue
+    if (resolveRecipeTitleFromLoose(obj as Record<string, unknown>)) return false
+  }
+  return true
 }
 
 function normalizeResponse(response: TodayPicksResponseOut | null): TodayPicksResponseOut {
   if (!response?.recipes) return { recipes: [], warnings: [] }
-  const recipes = response.recipes.filter(Boolean)
+  const recipes = response.recipes.filter(Boolean).map(ensureRecipeTitle)
   const byMeal = new Map<string, TodayPickRecipeOut>()
   for (const r of recipes) {
     const mt = (r.mealType || "").trim()
@@ -440,7 +438,7 @@ function normalizeResponse(response: TodayPicksResponseOut | null): TodayPicksRe
     }
   }
   return {
-    recipes: ordered.slice(0, 3),
+    recipes: ordered.slice(0, 3).map(ensureRecipeTitle),
     warnings: Array.isArray(response.warnings) ? response.warnings : [],
   }
 }
@@ -457,9 +455,9 @@ function looseNutrition(n: unknown): Nutrition {
 }
 
 function mapLooseToTodayPick(obj: Record<string, unknown>): TodayPickRecipeOut {
-  return {
+  return ensureRecipeTitle({
     id: String(obj.id ?? ""),
-    title: String(obj.title ?? ""),
+    title: resolveRecipeTitleFromLoose(obj),
     mealType: String(obj.mealType ?? ""),
     difficulty: String(obj.difficulty ?? "EASY"),
     time: String(obj.time ?? ""),
@@ -474,7 +472,7 @@ function mapLooseToTodayPick(obj: Record<string, unknown>): TodayPickRecipeOut {
     imageAlt: String(obj.imageAlt ?? ""),
     photographer: String(obj.photographer ?? ""),
     photographerUrl: String(obj.photographerUrl ?? ""),
-  }
+  })
 }
 
 async function enrichSingle(
@@ -509,14 +507,13 @@ async function enrichRecipes(
   preferredCuisines: string[],
   signal?: AbortSignal
 ): Promise<TodayPickRecipeOut[]> {
-  const out: TodayPickRecipeOut[] = []
+  const mapped: TodayPickRecipeOut[] = []
   for (const obj of recipes) {
-    throwIfAborted(signal)
     if (!obj || typeof obj !== "object") continue
-    const r = mapLooseToTodayPick(obj as Record<string, unknown>)
-    out.push(await enrichSingle(r, preferredCuisines, signal))
+    mapped.push(mapLooseToTodayPick(obj as Record<string, unknown>))
   }
-  return out
+  throwIfAborted(signal)
+  return Promise.all(mapped.map((r) => enrichSingle(r, preferredCuisines, signal)))
 }
 
 async function enrichFromRecipesList(
@@ -533,12 +530,8 @@ async function enrichFromRecipesList(
       photographerUrl: "",
     })
   )
-  const result: TodayPickRecipeOut[] = []
-  for (const m of mapped) {
-    throwIfAborted(signal)
-    result.push(await enrichSingle(m, preferredCuisines, signal))
-  }
-  return result
+  throwIfAborted(signal)
+  return Promise.all(mapped.map((m) => enrichSingle(m, preferredCuisines, signal)))
 }
 
 export async function getTodayPicks(
@@ -574,7 +567,10 @@ export async function getTodayPicks(
   if (!refresh && cachedRow?.response_json && cachedRow.fridge_hash === fHash) {
     try {
       const parsed = JSON.parse(cachedRow.response_json) as TodayPicksResponseOut
-      return normalizeResponse(parsed)
+      if (!rawRecipesMissingTitles(parsed.recipes || [])) {
+        return normalizeResponse(parsed)
+      }
+      /* stale cache: all titles empty — regenerate */
     } catch {
       /* fall through */
     }
@@ -620,7 +616,7 @@ export async function getTodayPicks(
     }
   }
 
-  const prompt = buildTodayPicksPrompt(grouped, chosenByMeal, preferredCuisines, avoidTitles, variationToken)
+  const prompt = buildTodayPicksPrompt(chosenByMeal, preferredCuisines, avoidTitles, variationToken)
   const jsonText = await generateJsonText(prompt, signal)
   throwIfAborted(signal)
 

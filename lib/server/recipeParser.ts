@@ -19,11 +19,20 @@ function asStringArray(v: unknown): string[] {
   return v.map((x) => String(x))
 }
 
+function resolveTitle(r: LooseRecipe & Record<string, unknown>): string {
+  for (const key of ["title", "name", "recipeName", "recipeTitle", "dishName"] as const) {
+    const v = r[key]
+    if (typeof v === "string" && v.trim()) return v.trim()
+  }
+  return ""
+}
+
 function mapRecipe(r: LooseRecipe): BackendRecipe {
   const n = r.nutrition && typeof r.nutrition === "object" ? (r.nutrition as Record<string, unknown>) : {}
+  const loose = r as LooseRecipe & Record<string, unknown>
   return {
     id: String(r.id ?? ""),
-    title: String(r.title ?? ""),
+    title: resolveTitle(loose),
     image: String(r.image ?? ""),
     mealType: String(r.mealType ?? ""),
     difficulty: String(r.difficulty ?? "EASY"),

@@ -1,6 +1,7 @@
 "use client"
 
-import React, { createContext, useCallback, useContext, useMemo, useReducer, useRef } from "react"
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef } from "react"
+import { useAuth } from "@/features/auth/context/auth-context"
 import type { Recipe } from "@/components/recipe-card"
 import type { RecipeGeneratorFormState, UiRecipe } from "@/features/recipe-generator/types"
 import { getMealTypeApiValues } from "@/features/recipe-generator/constants"
@@ -35,19 +36,22 @@ type RecipesState = {
   recipeGenerator: RecipeGeneratorState
 }
 
+const initialTodayPicks: TodayPicksState = {
+  fridgeCount: null,
+  recipes: [],
+  warnings: [],
+  loading: false,
+  error: null,
+  hasLoaded: false,
+}
+
 type Action =
   | { type: "todayPicks/set"; patch: Partial<TodayPicksState> }
+  | { type: "todayPicks/reset" }
   | { type: "recipeGenerator/set"; patch: Partial<RecipeGeneratorState> }
 
 const initialState: RecipesState = {
-  todayPicks: {
-    fridgeCount: null,
-    recipes: [],
-    warnings: [],
-    loading: false,
-    error: null,
-    hasLoaded: false,
-  },
+  todayPicks: initialTodayPicks,
   recipeGenerator: {
     ingredients: [],
     cuisine: "any",
@@ -64,6 +68,8 @@ function reducer(state: RecipesState, action: Action): RecipesState {
   switch (action.type) {
     case "todayPicks/set":
       return { ...state, todayPicks: { ...state.todayPicks, ...action.patch } }
+    case "todayPicks/reset":
+      return { ...state, todayPicks: { ...initialTodayPicks } }
     case "recipeGenerator/set":
       return { ...state, recipeGenerator: { ...state.recipeGenerator, ...action.patch } }
     default:
@@ -74,6 +80,7 @@ function reducer(state: RecipesState, action: Action): RecipesState {
 type RecipesContextValue = {
   state: RecipesState
   setTodayPicks: (patch: Partial<TodayPicksState>) => void
+  resetTodayPicks: () => void
   setRecipeGenerator: (patch: Partial<RecipeGeneratorState>) => void
   generateManualRecipes: () => Promise<void>
   cancelGenerateRecipes: () => void
@@ -82,12 +89,26 @@ type RecipesContextValue = {
 const RecipesContext = createContext<RecipesContextValue | null>(null)
 
 export function RecipesStateProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth()
   const [state, dispatch] = useReducer(reducer, initialState)
   const generateAbortRef = useRef<AbortController | null>(null)
+  const todayPicksUserIdRef = useRef<string | null>(null)
 
   const setTodayPicks = useCallback((patch: Partial<TodayPicksState>) => {
     dispatch({ type: "todayPicks/set", patch })
   }, [])
+
+  const resetTodayPicks = useCallback(() => {
+    dispatch({ type: "todayPicks/reset" })
+  }, [])
+
+  useEffect(() => {
+    const uid = user?.id ?? null
+    if (todayPicksUserIdRef.current !== null && todayPicksUserIdRef.current !== uid) {
+      dispatch({ type: "todayPicks/reset" })
+    }
+    todayPicksUserIdRef.current = uid
+  }, [user?.id])
 
   const setRecipeGenerator = useCallback((patch: Partial<RecipeGeneratorState>) => {
     dispatch({ type: "recipeGenerator/set", patch })
@@ -107,7 +128,7 @@ export function RecipesStateProvider({ children }: { children: React.ReactNode }
       return
     }
     if (mealTypeIds.length === 0) {
-      alert("Please select at least one meal type")
+      alert("Please select a meal type")
       return
     }
 
@@ -159,8 +180,15 @@ export function RecipesStateProvider({ children }: { children: React.ReactNode }
   }, [state.recipeGenerator])
 
   const value = useMemo<RecipesContextValue>(
-    () => ({ state, setTodayPicks, setRecipeGenerator, generateManualRecipes, cancelGenerateRecipes }),
-    [state, setTodayPicks, setRecipeGenerator, generateManualRecipes, cancelGenerateRecipes]
+    () => ({
+      state,
+      setTodayPicks,
+      resetTodayPicks,
+      setRecipeGenerator,
+      generateManualRecipes,
+      cancelGenerateRecipes,
+    }),
+    [state, setTodayPicks, resetTodayPicks, setRecipeGenerator, generateManualRecipes, cancelGenerateRecipes]
   )
 
   return <RecipesContext.Provider value={value}>{children}</RecipesContext.Provider>

@@ -12,10 +12,10 @@ interface MealTypeSelectorProps {
 export function MealTypeSelector({ selectedTypes, onSelectedTypesChange }: MealTypeSelectorProps) {
   const toggleType = (typeId: string) => {
     if (selectedTypes.includes(typeId)) {
-      onSelectedTypesChange(selectedTypes.filter((t) => t !== typeId))
+      onSelectedTypesChange([])
       return
     }
-    onSelectedTypesChange([...selectedTypes, typeId])
+    onSelectedTypesChange([typeId])
   }
 
   return (
@@ -25,7 +25,7 @@ export function MealTypeSelector({ selectedTypes, onSelectedTypesChange }: MealT
           🍴
         </span>
         <h2 className="font-serif text-sm font-semibold text-[#1F3A2B] sm:text-base md:text-lg">
-          Select Meal Type <span className="text-[#F97316]">*</span>
+          Select a meal type <span className="text-[#F97316]">*</span>
         </h2>
       </div>
 

@@ -14,13 +14,14 @@ import { RecipeHeroBanner } from "@/features/recipe-generator/components/recipe-
 import { RecipesSection } from "@/features/recipe-generator/components/recipes-section"
 import { useRecipeGenerator } from "@/features/recipe-generator/hooks/use-recipe-generator"
 import { useAuth } from "@/features/auth/context/auth-context"
-import { fetchFridgeItems } from "@/features/fridge/services/fridge"
+import { useFridgeCache } from "@/features/fridge/context/fridge-cache-context"
 import { cn } from "@/lib/utils"
 
 export function RecipeGeneratorPage() {
   const isMobile = useIsMobile()
   const router = useRouter()
   const { accessToken, isHydrated, user } = useAuth()
+  const { loadFridgeItems } = useFridgeCache()
   const {
     formState,
     setIngredients,
@@ -49,7 +50,7 @@ export function RecipeGeneratorPage() {
     let cancelled = false
     void (async () => {
       try {
-        const items = await fetchFridgeItems(accessToken)
+        const items = await loadFridgeItems()
         if (cancelled) return
         setFridgeQuickPicks(items.map((i) => i.name))
       } catch {
@@ -60,7 +61,7 @@ export function RecipeGeneratorPage() {
     return () => {
       cancelled = true
     }
-  }, [accessToken, isHydrated, user])
+  }, [isHydrated, loadFridgeItems, user])
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab)
@@ -84,7 +85,7 @@ export function RecipeGeneratorPage() {
       ? "Add ingredients and select a meal type"
       : !hasIngredients
         ? "Add at least one ingredient"
-        : "Select at least one meal type"
+        : "Select a meal type"
     : "Let AI work its magic ✨"
 
   return (

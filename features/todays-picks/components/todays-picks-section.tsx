@@ -1,22 +1,38 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { usePathname } from "next/navigation"
 import { isAbortError } from "@/lib/abort"
 import { Pencil, Sparkles } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/features/auth/context/auth-context"
-import { fetchFridgeItems } from "@/features/fridge/services/fridge"
+import { useFridgeCache } from "@/features/fridge/context/fridge-cache-context"
+import { fridgeStockTips } from "@/features/fridge/fridge-stock-tips"
 import { fetchTodayPicks } from "@/features/todays-picks/services/todays-picks"
 import { normalizeBackendRecipe } from "@/features/recipe-generator/services/recipe-mappers"
 import { RecipesSection } from "@/features/recipe-generator/components/recipes-section"
 import type { Recipe } from "@/components/recipe-card"
 import { useIsMobile } from "@/components/ui/use-mobile"
 import { useTodayPicksState } from "@/features/recipes/state/recipes-state"
-import { fetchUserPreferences, saveUserPreferences } from "@/features/user-preferences/services/user-preferences"
+import { usePreferencesCache } from "@/features/user-preferences/context/preferences-cache-context"
 import { CuisinePicker } from "@/features/user-preferences/components/cuisine-picker"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+
+function StockTipsCard({ tips }: { tips: string[] }) {
+  if (tips.length === 0) return null
+  return (
+    <div className="rounded-xl border border-[#E2D9CC] bg-[#FBF8F2] p-4 text-[12px] leading-snug text-[#1F3A2B]/75 sm:text-sm">
+      <p className="font-semibold text-[#1F3A2B]">A quick tip for better picks</p>
+      <ul className="mt-1.5 list-disc space-y-1 pl-5">
+        {tips.map((w, idx) => (
+          <li key={`${w}-${idx}`}>{w}</li>
+        ))}
+      </ul>
+    </div>
+  )
+}
 
 function SkeletonCard() {
   return (
@@ -35,47 +51,92 @@ function SkeletonCard() {
 
 export function TodaysPicksSection({ className }: { className?: string }) {
   const { accessToken, user, isHydrated } = useAuth()
+  const { items: fridgeItems, loadFridgeItems } = useFridgeCache()
+  const {
+    preferredCuisines,
+    hasLoaded: prefsLoaded,
+    loadPreferences,
+    savePreferences,
+  } = usePreferencesCache()
+  const pathname = usePathname()
   const isMobile = useIsMobile()
 
   const { todayPicks, setTodayPicks } = useTodayPicksState()
   const { fridgeCount, loading, error, warnings, recipes, hasLoaded } = todayPicks
   const [expandedRecipeId, setExpandedRecipeId] = useState<string | null>(null)
-  const [preferredCuisines, setPreferredCuisines] = useState<string[]>([])
-  const [prefsLoaded, setPrefsLoaded] = useState(false)
   const [prefsOpen, setPrefsOpen] = useState(false)
   const [prefsDraft, setPrefsDraft] = useState<string[]>([])
   const [prefsSaving, setPrefsSaving] = useState(false)
   const todayPicksAbortRef = useRef<AbortController | null>(null)
+  const [slowLoadNotice, setSlowLoadNotice] = useState(false)
+  const [latchedStockTips, setLatchedStockTips] = useState<string[]>([])
 
   const canUse = Boolean(isHydrated && user && accessToken)
 
-  const emptyFridge = useMemo(() => fridgeCount === 0, [fridgeCount])
+  const emptyFridge = canUse && fridgeCount !== null && fridgeCount === 0
+  const showLoading = loading || (!hasLoaded && !error && !emptyFridge && canUse)
+
+  const stockTips = useMemo(() => {
+    const merged = new Set<string>([...warnings, ...fridgeStockTips(fridgeItems)])
+    return [...merged]
+  }, [warnings, fridgeItems])
+
+  const displayStockTips = latchedStockTips.length > 0 ? latchedStockTips : stockTips
+
+  useEffect(() => {
+    if (stockTips.length > 0) setLatchedStockTips(stockTips)
+  }, [stockTips])
 
   const load = useCallback(
     async (opts: { refresh: boolean }) => {
       if (!canUse) return
+
       todayPicksAbortRef.current?.abort()
       const controller = new AbortController()
       todayPicksAbortRef.current = controller
-      setTodayPicks({ error: null, loading: true })
+      setTodayPicks({
+        error: null,
+        loading: true,
+        recipes: [],
+        hasLoaded: false,
+      })
+      let finished = false
       try {
-        const items = await fetchFridgeItems(accessToken!)
+        const items = await loadFridgeItems()
         if (controller.signal.aborted) return
+        const tipsFromFridge = fridgeStockTips(items)
+        if (tipsFromFridge.length > 0) {
+          setLatchedStockTips(tipsFromFridge)
+        }
         setTodayPicks({ fridgeCount: items.length })
         if (items.length === 0) {
-          setTodayPicks({ recipes: [], warnings: [], hasLoaded: true })
+          finished = true
+          setTodayPicks({ recipes: [], warnings: tipsFromFridge, hasLoaded: true })
           return
         }
         const res = await fetchTodayPicks(accessToken!, opts.refresh, controller.signal)
         if (controller.signal.aborted) return
         const next = Array.isArray(res.recipes) ? res.recipes.map(normalizeBackendRecipe) : []
+        const apiWarnings = Array.isArray(res.warnings) ? res.warnings : []
+        const mergedWarnings = [...new Set([...apiWarnings, ...tipsFromFridge])]
+        if (mergedWarnings.length > 0) {
+          setLatchedStockTips(mergedWarnings)
+        }
+        finished = true
         setTodayPicks({
           recipes: next,
-          warnings: Array.isArray(res.warnings) ? res.warnings : [],
+          warnings: mergedWarnings,
           hasLoaded: true,
+          error:
+            next.length === 0
+              ? "We couldn't generate meal ideas right now. Tap Refresh to try again."
+              : null,
         })
       } catch (e) {
-        if (isAbortError(e) || controller.signal.aborted) return
+        if (isAbortError(e) || controller.signal.aborted) {
+          return
+        }
+        finished = true
         setTodayPicks({
           error: e instanceof Error ? e.message : "Could not load today's picks.",
           hasLoaded: true,
@@ -87,40 +148,65 @@ export function TodaysPicksSection({ className }: { className?: string }) {
         setTodayPicks({ loading: false })
       }
     },
-    [accessToken, canUse, setTodayPicks]
+    [accessToken, canUse, loadFridgeItems, setTodayPicks]
   )
 
   useEffect(() => {
-    return () => todayPicksAbortRef.current?.abort()
-  }, [])
+    if (pathname === "/todays-picks") return
+    todayPicksAbortRef.current?.abort()
+  }, [pathname])
 
-  const loadPreferences = useCallback(async () => {
-    if (!canUse) return
-    try {
-      const res = await fetchUserPreferences(accessToken!)
-      setPreferredCuisines(Array.isArray(res.preferredCuisines) ? res.preferredCuisines : [])
-    } catch {
-      setPreferredCuisines([])
-    } finally {
-      setPrefsLoaded(true)
-    }
-  }, [accessToken, canUse])
+  const loadRef = useRef(load)
+  loadRef.current = load
 
   useEffect(() => {
     if (!canUse) {
-      // Keep existing picks in memory; just stop making authenticated calls when logged out.
       setTodayPicks({ loading: false })
       return
     }
-    // Don't refetch on every mount/tab switch if we already have picks in state.
-    if (hasLoaded && recipes.length > 0 && !loading && !error) return
-    void load({ refresh: false })
-  }, [canUse, error, hasLoaded, load, loading, recipes.length, setTodayPicks])
+    if (pathname !== "/todays-picks") return
+    void loadRef.current({ refresh: false })
+  }, [canUse, pathname])
+
+  // Retry if a previous run was aborted (e.g. React strict mode) and left picks unloaded.
+  useEffect(() => {
+    if (!canUse || pathname !== "/todays-picks") return
+    if (hasLoaded || loading || error) return
+    const timer = window.setTimeout(() => {
+      void loadRef.current({ refresh: false })
+    }, 100)
+    return () => window.clearTimeout(timer)
+  }, [canUse, pathname, hasLoaded, loading, error])
+
+  // Recover from stale loading state (e.g. aborted navigation) with no in-flight request.
+  useEffect(() => {
+    if (!canUse || pathname !== "/todays-picks") return
+    if (!loading || hasLoaded) return
+    const timer = window.setTimeout(() => {
+      if (todayPicksAbortRef.current) return
+      setTodayPicks({ loading: false })
+      void loadRef.current({ refresh: false })
+    }, 2500)
+    return () => window.clearTimeout(timer)
+  }, [canUse, pathname, loading, hasLoaded, setTodayPicks])
+
+  useEffect(() => {
+    if (!loading) return
+    const timer = window.setTimeout(() => setSlowLoadNotice(true), 8000)
+    return () => window.clearTimeout(timer)
+  }, [loading])
+
+  useEffect(() => {
+    if (pathname !== "/todays-picks") {
+      setSlowLoadNotice(false)
+      setLatchedStockTips([])
+    }
+  }, [pathname])
 
   useEffect(() => {
     if (!canUse) return
     if (prefsLoaded) return
-    void loadPreferences()
+    void loadPreferences().catch(() => {})
   }, [canUse, loadPreferences, prefsLoaded])
 
   useEffect(() => {
@@ -147,15 +233,15 @@ export function TodaysPicksSection({ className }: { className?: string }) {
   }
 
   const savePrefs = async () => {
-    if (!accessToken) return
+    if (!canUse) return
     setPrefsSaving(true)
     try {
-      const res = await saveUserPreferences(accessToken, prefsDraft)
-      setPreferredCuisines(res.preferredCuisines ?? prefsDraft)
+      await savePreferences(prefsDraft)
       setPrefsOpen(false)
       toast.success("Preferences saved.")
       // Refresh picks after preference change
-      setTodayPicks({ recipes: [], warnings: [], error: null, hasLoaded: true })
+      setLatchedStockTips([])
+      setTodayPicks({ recipes: [], warnings: [], error: null, hasLoaded: false })
       void load({ refresh: true })
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not save preferences.")
@@ -219,31 +305,46 @@ export function TodaysPicksSection({ className }: { className?: string }) {
         <div className="rounded-xl border border-dashed border-[#E2D9CC] bg-[#FBF8F2] p-6 text-center text-sm text-[#1F3A2B]/70">
           Add ingredients to My Fridge to get daily meal ideas.
         </div>
-      ) : error ? (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</div>
-      ) : loading && recipes.length === 0 ? (
-        <div className="space-y-3">
-          <p className="text-[12px] font-medium text-[#1F3A2B]/75 sm:text-sm">Finding meal ideas from your fridge…</p>
-          <div className="grid gap-3 lg:grid-cols-3">
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-          </div>
-        </div>
-      ) : recipes.length > 0 ? (
+      ) : (
         <>
-          {warnings.length > 0 ? (
-            <div className="rounded-xl border border-[#E2D9CC] bg-[#FBF8F2] p-4 text-[12px] leading-snug text-[#1F3A2B]/75 sm:text-sm">
-              <p className="font-semibold text-[#1F3A2B]">Tips</p>
-              <ul className="mt-1 list-disc space-y-0.5 pl-5">
-                {warnings.map((w, idx) => (
-                  <li key={`${w}-${idx}`}>{w}</li>
-                ))}
-              </ul>
+          <StockTipsCard tips={displayStockTips} />
+          {error && recipes.length === 0 && !showLoading ? (
+            <div className="space-y-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+              <p>{error}</p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-11 border-[#E2D9CC] font-semibold text-[#1F3A2B] hover:bg-[#F7F3EB]"
+                disabled={loading}
+                onClick={() => {
+                  setTodayPicks({ error: null, hasLoaded: false })
+                  void load({ refresh: true })
+                }}
+              >
+                {loading ? "Refreshing…" : "Refresh Picks"}
+              </Button>
             </div>
-          ) : null}
-
-          <RecipesSection
+          ) : showLoading && recipes.length === 0 ? (
+            <div className="space-y-3">
+              <p className="text-[12px] font-medium text-[#1F3A2B]/75 sm:text-sm">
+                Finding meal ideas from your fridge…
+              </p>
+              {slowLoadNotice ? (
+                <p className="text-[12px] text-[#1F3A2B]/60 sm:text-sm">
+                  First load today can take 20–40 seconds while we create your meals. Cached picks load
+                  much faster on your next visit.
+                </p>
+              ) : null}
+              <div className="grid gap-3 lg:grid-cols-3">
+                <SkeletonCard />
+                <SkeletonCard />
+                <SkeletonCard />
+              </div>
+            </div>
+          ) : recipes.length > 0 ? (
+            <>
+              <RecipesSection
             recipes={recipes}
             expandedRecipeId={expandedRecipeId}
             onToggleExpand={(id) => setExpandedRecipeId((cur) => (cur === id ? null : id))}
@@ -260,20 +361,33 @@ export function TodaysPicksSection({ className }: { className?: string }) {
                 className="h-11 border-[#E2D9CC] font-semibold text-[#1F3A2B] hover:bg-[#F7F3EB]"
                 disabled={!canUse || loading || emptyFridge}
                 onClick={() => {
-                  setTodayPicks({ recipes: [], warnings: [], error: null, hasLoaded: true })
+                  setLatchedStockTips([])
+                  setTodayPicks({ recipes: [], warnings: [], error: null, hasLoaded: false })
                   void load({ refresh: true })
                 }}
               >
                 {loading ? "Refreshing…" : "Refresh Picks"}
               </Button>
             }
-            hideMobileRecipeBackLink
-          />
+                hideMobileRecipeBackLink
+              />
+            </>
+          ) : (
+            <div className="space-y-3 rounded-xl border border-dashed border-[#E2D9CC] bg-[#FBF8F2] p-6 text-center text-sm text-[#1F3A2B]/70">
+              <p>We couldn&apos;t load meal ideas. Try again in a moment.</p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-3 h-11 border-[#E2D9CC] font-semibold text-[#1F3A2B] hover:bg-[#F7F3EB]"
+                disabled={loading}
+                onClick={() => void load({ refresh: true })}
+              >
+                Try again
+              </Button>
+            </div>
+          )}
         </>
-      ) : (
-        <div className="rounded-xl border border-dashed border-[#E2D9CC] bg-[#FBF8F2] p-6 text-center text-sm text-[#1F3A2B]/70">
-          Finding meal ideas from your fridge…
-        </div>
       )}
 
       <Dialog open={prefsOpen} onOpenChange={(open) => (!prefsSaving ? setPrefsOpen(open) : null)}>
