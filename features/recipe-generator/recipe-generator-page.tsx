@@ -14,13 +14,14 @@ import { RecipeHeroBanner } from "@/features/recipe-generator/components/recipe-
 import { RecipesSection } from "@/features/recipe-generator/components/recipes-section"
 import { useRecipeGenerator } from "@/features/recipe-generator/hooks/use-recipe-generator"
 import { useAuth } from "@/features/auth/context/auth-context"
-import { fetchFridgeItems } from "@/features/fridge/services/fridge"
+import { useFridgeCache } from "@/features/fridge/context/fridge-cache-context"
 import { cn } from "@/lib/utils"
 
 export function RecipeGeneratorPage() {
   const isMobile = useIsMobile()
   const router = useRouter()
-  const { accessToken, isHydrated, user } = useAuth()
+  const { isHydrated, user } = useAuth()
+  const { items: fridgeItems } = useFridgeCache()
   const {
     formState,
     setIngredients,
@@ -38,29 +39,7 @@ export function RecipeGeneratorPage() {
 
   const [expandedRecipeId, setExpandedRecipeId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState("planner")
-  const [fridgeQuickPicks, setFridgeQuickPicks] = useState<string[]>([])
-
-  useEffect(() => {
-    if (!isHydrated) return
-    if (!user || !accessToken) {
-      setFridgeQuickPicks([])
-      return
-    }
-    let cancelled = false
-    void (async () => {
-      try {
-        const items = await fetchFridgeItems(accessToken)
-        if (cancelled) return
-        setFridgeQuickPicks(items.map((i) => i.name))
-      } catch {
-        if (cancelled) return
-        setFridgeQuickPicks([])
-      }
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [accessToken, isHydrated, user])
+  const fridgeQuickPicks = isHydrated && user ? fridgeItems.map((i) => i.name) : []
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab)

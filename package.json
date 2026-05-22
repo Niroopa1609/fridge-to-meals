@@ -12,7 +12,8 @@
     "db:seed-catalog": "node scripts/seed-catalog-recipes.mjs",
     "db:seed-catalog:cuisine": "node scripts/seed-catalog-recipes.mjs --cuisine=Indian --count=100",
     "db:import-catalog-indian": "node scripts/import-catalog-from-ai.mjs --cuisine=Indian --replace --preset=indian",
-    "generate:pwa-icons": "node scripts/generate-pwa-icons.mjs"
+    "generate:pwa-icons": "node scripts/generate-pwa-icons.mjs",
+    "generate:vapid-keys": "node scripts/generate-vapid-keys.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -68,6 +69,7 @@
     "sonner": "^1.7.1",
     "tailwind-merge": "^3.3.1",
     "vaul": "^1.1.2",
+    "web-push": "^3.6.7",
     "zod": "^3.24.1"
   },
   "devDependencies": {

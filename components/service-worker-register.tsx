@@ -3,12 +3,10 @@
 import { useEffect } from "react"
 
 /**
- * Registers the app shell service worker in production only (HTTPS).
- * Keeps a network-only fetch handler so API/auth behavior stays unchanged.
+ * Registers the service worker (required for Web Push). Network-only fetch handler.
  */
 export function ServiceWorkerRegister() {
   useEffect(() => {
-    if (process.env.NODE_ENV !== "production") return
     if (!("serviceWorker" in navigator)) return
 
     const register = async () => {

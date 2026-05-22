@@ -49,12 +49,12 @@ import {
   normalizeSavedItemCategory,
   type FridgeSummarySelection,
 } from "@/features/fridge/filter-saved-items-by-category"
+import { useFridgeCache } from "@/features/fridge/context/fridge-cache-context"
 import {
   addFridgeItems,
   deleteAllFridgeItems,
   deleteFridgeItem,
   detectFridgeIngredients,
-  fetchFridgeItems,
   type FridgeItemDto,
 } from "@/features/fridge/services/fridge"
 import {
@@ -142,6 +142,13 @@ function summaryCounts(items: FridgeItemDto[]): Record<FridgeCategory, number> {
 export function MyFridgePage() {
   const router = useRouter()
   const { accessToken, user, isHydrated } = useAuth()
+  const {
+    items: savedItems,
+    error: loadSavedError,
+    loadFridgeItems,
+    invalidateFridge,
+    removeItemLocally,
+  } = useFridgeCache()
   const isLoggedIn = Boolean(isHydrated && user && accessToken)
 
   const [selectedImages, setSelectedImages] = useState<SelectedImage[]>([])
@@ -150,8 +157,6 @@ export function MyFridgePage() {
   const [detectionError, setDetectionError] = useState<string | null>(null)
   const [dragActive, setDragActive] = useState(false)
 
-  const [savedItems, setSavedItems] = useState<FridgeItemDto[]>([])
-  const [loadSavedError, setLoadSavedError] = useState<string | null>(null)
   const [fridgeItemDeletePending, setFridgeItemDeletePending] = useState<Record<string, boolean>>({})
   const [removeAllFridgeOpen, setRemoveAllFridgeOpen] = useState(false)
   const [removeAllFridgeBusy, setRemoveAllFridgeBusy] = useState(false)
@@ -174,26 +179,6 @@ export function MyFridgePage() {
       summaryInventoryRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" })
     })
   }, [])
-
-  const reloadSaved = useCallback(async () => {
-    if (!accessToken) {
-      setSavedItems([])
-      return
-    }
-    setLoadSavedError(null)
-    try {
-      const data = await fetchFridgeItems(accessToken)
-      setSavedItems(data)
-    } catch {
-      setLoadSavedError("Could not load your saved fridge.")
-      setSavedItems([])
-    }
-  }, [accessToken])
-
-  useEffect(() => {
-    if (!isHydrated) return
-    void reloadSaved()
-  }, [isHydrated, reloadSaved])
 
   useEffect(() => {
     return () => detectAbortRef.current?.abort()
@@ -365,7 +350,7 @@ export function MyFridgePage() {
       setFridgeItemDeletePending((p) => ({ ...p, [itemId]: true }))
       try {
         await deleteFridgeItem(accessToken, itemId)
-        setSavedItems((prev) => prev.filter((x) => x.id !== itemId))
+        removeItemLocally(itemId)
         toast.success("Removed from your fridge.")
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Could not remove ingredient.")
@@ -377,7 +362,7 @@ export function MyFridgePage() {
         })
       }
     },
-    [accessToken]
+    [accessToken, removeItemLocally]
   )
 
   const handleRemoveAllSavedFridge = useCallback(async () => {
@@ -388,7 +373,8 @@ export function MyFridgePage() {
     setRemoveAllFridgeBusy(true)
     try {
       await deleteAllFridgeItems(accessToken)
-      setSavedItems([])
+      invalidateFridge()
+      await loadFridgeItems({ force: true })
       setSelectedCategory("ALL")
       setRemoveAllFridgeOpen(false)
       toast.success("All saved ingredients were removed.")
@@ -397,7 +383,7 @@ export function MyFridgePage() {
     } finally {
       setRemoveAllFridgeBusy(false)
     }
-  }, [accessToken])
+  }, [accessToken, invalidateFridge, loadFridgeItems])
 
   useEffect(() => {
     if (savedItems.length === 0) setSelectedCategory("ALL")
@@ -480,7 +466,8 @@ export function MyFridgePage() {
     try {
       const payload = detectedIngredients.map((r) => ({ name: r.name, category: r.category }))
       const { added } = await addFridgeItems(accessToken, payload)
-      await reloadSaved()
+      invalidateFridge()
+      await loadFridgeItems({ force: true })
       clearSelectedImages()
       if (added > 0) {
         setDetectedIngredients([])

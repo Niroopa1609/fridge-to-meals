@@ -3,10 +3,11 @@
 import { useEffect, useRef } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { useAuth } from "@/features/auth/context/auth-context"
-import { fetchUserPreferences } from "@/features/user-preferences/services/user-preferences"
+import { usePreferencesCache } from "@/features/user-preferences/context/preferences-cache-context"
 
 export function OnboardingGate() {
   const { isHydrated, user, accessToken } = useAuth()
+  const { loadPreferences } = usePreferencesCache()
   const router = useRouter()
   const pathname = usePathname()
 
@@ -17,12 +18,11 @@ export function OnboardingGate() {
     if (!isHydrated) return
     if (!user || !accessToken) return
 
-    // Avoid spamming the endpoint on re-renders.
     if (lastCheckedForUserId.current === user.id) return
     if (inFlight.current) return
     inFlight.current = true
 
-    fetchUserPreferences(accessToken)
+    loadPreferences()
       .then((prefs) => {
         lastCheckedForUserId.current = user.id
 
@@ -34,14 +34,12 @@ export function OnboardingGate() {
         if (onOnboarding) router.replace("/")
       })
       .catch(() => {
-        // If this fails, don't trap the user.
         lastCheckedForUserId.current = user.id
       })
       .finally(() => {
         inFlight.current = false
       })
-  }, [accessToken, isHydrated, pathname, router, user])
+  }, [accessToken, isHydrated, loadPreferences, pathname, router, user])
 
   return null
 }
-

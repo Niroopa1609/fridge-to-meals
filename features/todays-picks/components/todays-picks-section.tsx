@@ -7,14 +7,14 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/features/auth/context/auth-context"
-import { fetchFridgeItems } from "@/features/fridge/services/fridge"
+import { useFridgeCache } from "@/features/fridge/context/fridge-cache-context"
 import { fetchTodayPicks } from "@/features/todays-picks/services/todays-picks"
 import { normalizeBackendRecipe } from "@/features/recipe-generator/services/recipe-mappers"
 import { RecipesSection } from "@/features/recipe-generator/components/recipes-section"
 import type { Recipe } from "@/components/recipe-card"
 import { useIsMobile } from "@/components/ui/use-mobile"
 import { useTodayPicksState } from "@/features/recipes/state/recipes-state"
-import { fetchUserPreferences, saveUserPreferences } from "@/features/user-preferences/services/user-preferences"
+import { usePreferencesCache } from "@/features/user-preferences/context/preferences-cache-context"
 import { CuisinePicker } from "@/features/user-preferences/components/cuisine-picker"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
@@ -35,93 +35,120 @@ function SkeletonCard() {
 
 export function TodaysPicksSection({ className }: { className?: string }) {
   const { accessToken, user, isHydrated } = useAuth()
+  const { loadFridgeItems } = useFridgeCache()
+  const { preferredCuisines, savePreferences } = usePreferencesCache()
   const isMobile = useIsMobile()
 
   const { todayPicks, setTodayPicks } = useTodayPicksState()
   const { fridgeCount, loading, error, warnings, recipes, hasLoaded } = todayPicks
   const [expandedRecipeId, setExpandedRecipeId] = useState<string | null>(null)
-  const [preferredCuisines, setPreferredCuisines] = useState<string[]>([])
-  const [prefsLoaded, setPrefsLoaded] = useState(false)
   const [prefsOpen, setPrefsOpen] = useState(false)
   const [prefsDraft, setPrefsDraft] = useState<string[]>([])
   const [prefsSaving, setPrefsSaving] = useState(false)
   const todayPicksAbortRef = useRef<AbortController | null>(null)
+  const loadInFlightRef = useRef(false)
+  const userIdRef = useRef<string | null>(null)
 
   const canUse = Boolean(isHydrated && user && accessToken)
+
+  useEffect(() => {
+    const uid = user?.id ?? null
+    if (uid === userIdRef.current) return
+    userIdRef.current = uid
+    if (!uid) return
+    setTodayPicks({
+      fridgeCount: null,
+      recipes: [],
+      warnings: [],
+      loading: false,
+      error: null,
+      hasLoaded: false,
+    })
+  }, [user?.id, setTodayPicks])
 
   const emptyFridge = useMemo(() => fridgeCount === 0, [fridgeCount])
 
   const load = useCallback(
     async (opts: { refresh: boolean }) => {
-      if (!canUse) return
-      todayPicksAbortRef.current?.abort()
+      if (!canUse || !accessToken) return
+      if (loadInFlightRef.current && !opts.refresh) return
+
+      if (opts.refresh) {
+        todayPicksAbortRef.current?.abort()
+      }
+
+      loadInFlightRef.current = true
       const controller = new AbortController()
       todayPicksAbortRef.current = controller
-      setTodayPicks({ error: null, loading: true })
+
+      if (opts.refresh) {
+        setTodayPicks({ error: null, loading: true, hasLoaded: false, recipes: [], warnings: [] })
+      } else {
+        setTodayPicks({ error: null, loading: true })
+      }
+
       try {
-        const items = await fetchFridgeItems(accessToken!)
+        const items = await loadFridgeItems()
         if (controller.signal.aborted) return
         setTodayPicks({ fridgeCount: items.length })
         if (items.length === 0) {
-          setTodayPicks({ recipes: [], warnings: [], hasLoaded: true })
+          setTodayPicks({ recipes: [], warnings: [], hasLoaded: true, loading: false })
           return
         }
-        const res = await fetchTodayPicks(accessToken!, opts.refresh, controller.signal)
+        const res = await fetchTodayPicks(accessToken, opts.refresh, controller.signal)
         if (controller.signal.aborted) return
         const next = Array.isArray(res.recipes) ? res.recipes.map(normalizeBackendRecipe) : []
         setTodayPicks({
           recipes: next,
           warnings: Array.isArray(res.warnings) ? res.warnings : [],
           hasLoaded: true,
+          loading: false,
         })
       } catch (e) {
         if (isAbortError(e) || controller.signal.aborted) return
         setTodayPicks({
           error: e instanceof Error ? e.message : "Could not load today's picks.",
           hasLoaded: true,
+          loading: false,
         })
       } finally {
+        loadInFlightRef.current = false
+        setTodayPicks({ loading: false })
         if (todayPicksAbortRef.current === controller) {
           todayPicksAbortRef.current = null
         }
-        setTodayPicks({ loading: false })
       }
     },
-    [accessToken, canUse, setTodayPicks]
+    [accessToken, canUse, loadFridgeItems, setTodayPicks]
   )
 
   useEffect(() => {
     return () => todayPicksAbortRef.current?.abort()
   }, [])
 
-  const loadPreferences = useCallback(async () => {
-    if (!canUse) return
-    try {
-      const res = await fetchUserPreferences(accessToken!)
-      setPreferredCuisines(Array.isArray(res.preferredCuisines) ? res.preferredCuisines : [])
-    } catch {
-      setPreferredCuisines([])
-    } finally {
-      setPrefsLoaded(true)
-    }
-  }, [accessToken, canUse])
+  const picksReady = hasLoaded && (recipes.length > 0 || emptyFridge || Boolean(error))
 
   useEffect(() => {
     if (!canUse) {
-      // Keep existing picks in memory; just stop making authenticated calls when logged out.
       setTodayPicks({ loading: false })
       return
     }
-    // Don't refetch on every mount/tab switch if we already have picks in state.
-    if (hasLoaded && recipes.length > 0 && !loading && !error) return
+    if (picksReady) return
+    if (loadInFlightRef.current) return
     void load({ refresh: false })
-  }, [canUse, error, hasLoaded, load, loading, recipes.length, setTodayPicks])
+  }, [canUse, load, picksReady, setTodayPicks])
 
   useEffect(() => {
-    if (!canUse) return
-    if (prefsLoaded) return
-    void loadPreferences()
-  }, [canUse, loadPreferences, prefsLoaded])
+    if (!loading) return
+    const t = window.setTimeout(() => {
+      setTodayPicks({
+        error: "Taking longer than usual. Try Refresh Picks or check your connection.",
+        hasLoaded: true,
+        loading: false,
+      })
+    }, 90_000)
+    return () => window.clearTimeout(t)
+  }, [loading, setTodayPicks])
 
   useEffect(() => {
     setExpandedRecipeId(null)
@@ -150,12 +177,11 @@ export function TodaysPicksSection({ className }: { className?: string }) {
     if (!accessToken) return
     setPrefsSaving(true)
     try {
-      const res = await saveUserPreferences(accessToken, prefsDraft)
-      setPreferredCuisines(res.preferredCuisines ?? prefsDraft)
+      await savePreferences(prefsDraft)
       setPrefsOpen(false)
       toast.success("Preferences saved.")
       // Refresh picks after preference change
-      setTodayPicks({ recipes: [], warnings: [], error: null, hasLoaded: true })
+      setTodayPicks({ recipes: [], warnings: [], error: null, hasLoaded: false })
       void load({ refresh: true })
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not save preferences.")
@@ -271,8 +297,17 @@ export function TodaysPicksSection({ className }: { className?: string }) {
           />
         </>
       ) : (
-        <div className="rounded-xl border border-dashed border-[#E2D9CC] bg-[#FBF8F2] p-6 text-center text-sm text-[#1F3A2B]/70">
-          Finding meal ideas from your fridge…
+        <div className="rounded-xl border border-dashed border-[#E2D9CC] bg-[#FBF8F2] p-6 text-center">
+          <p className="text-sm text-[#1F3A2B]/70">We couldn&apos;t load meal ideas yet.</p>
+          <Button
+            type="button"
+            className="mt-4 h-11 bg-[#F97316] text-white hover:bg-[#F28C38]"
+            disabled={!canUse || loading}
+            onClick={() => void load({ refresh: true })}
+          >
+            <Sparkles className="mr-2 h-4 w-4" aria-hidden />
+            {loading ? "Loading…" : "Try again"}
+          </Button>
         </div>
       )}
 

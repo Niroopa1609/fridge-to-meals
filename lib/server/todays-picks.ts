@@ -16,6 +16,7 @@ import {
   logCatalogMetrics,
 } from "@/lib/server/recipe-catalog"
 import { findTodayPicksFromCatalog } from "@/lib/server/recipe-catalog-today"
+import { notifyTodaysPicksReady } from "@/lib/server/notify-todays-picks"
 import type { BackendRecipe } from "@/features/recipe-generator/types"
 
 const MEALS = ["Breakfast", "Lunch", "Dinner"] as const
@@ -659,6 +660,7 @@ export async function getTodayPicks(
         response_json: JSON.stringify(normalized),
         used_ingredients_json: JSON.stringify(used),
       })
+      void notifyTodaysPicksReady(supabase, userId, pickDate, normalized.recipes.length).catch(() => {})
     } catch {
       /* cache best-effort */
     }
@@ -707,6 +709,7 @@ export async function getTodayPicks(
       response_json: JSON.stringify(withMeta),
       used_ingredients_json: JSON.stringify(used),
     })
+    void notifyTodaysPicksReady(supabase, userId, pickDate, withMeta.recipes.length).catch(() => {})
   } catch {
     /* cache best-effort */
   }
