@@ -83,7 +83,7 @@ export function PushNotificationsPrompt() {
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold leading-snug text-[#1F3A2B]">Get notified when picks are ready</p>
           <p className="mt-1 text-[12px] leading-snug text-[#1F3A2B]/65 sm:text-[13px]">
-            Get a daily alert around 5 AM Eastern with Breakfast, Lunch, and Dinner titles from your fridge.
+            Get a daily alert with Breakfast, Lunch, and Dinner ideas from your fridge..
             {installedHint}
           </p>
           <div className="mt-3 flex flex-wrap gap-2">

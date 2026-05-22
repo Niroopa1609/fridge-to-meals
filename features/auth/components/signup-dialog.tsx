@@ -45,7 +45,7 @@ export function SignUpDialog({
         const pushResult = await subscribeToPushNotifications()
         if (pushResult.ok) {
           toast.success("Today's-Pick notifications enabled.", {
-            description: "You'll get a daily alert around 5 AM Eastern with your meal ideas.",
+            description: "You'll get a daily alert around with your meal ideas.",
           })
         } else {
           toast.message("Account created", {

@@ -25,11 +25,59 @@ export function getPhoneInstallPlatform(): PhoneInstallPlatform | null {
   return null
 }
 
-/** Install banner + step-by-step help only on phones (not desktop browsers). */
-export function shouldShowPwaInstallBanner(): boolean {
+const PWA_INSTALLED_STORAGE_KEY = "fridge-to-meals.pwaInstalled"
+
+/** Persist after install so the banner stays hidden in the browser tab too. */
+export function markPwaInstalled(): void {
+  if (typeof window === "undefined") return
+  try {
+    window.localStorage.setItem(PWA_INSTALLED_STORAGE_KEY, "1")
+  } catch {
+    /* private mode / blocked storage */
+  }
+}
+
+export function hasMarkedPwaInstalled(): boolean {
   if (typeof window === "undefined") return false
-  if (isAppInstalled()) return false
-  return isPhoneInstallTarget()
+  try {
+    return window.localStorage.getItem(PWA_INSTALLED_STORAGE_KEY) === "1"
+  } catch {
+    return false
+  }
+}
+
+/** Chromium: detect installed PWA when user opens the site in a normal tab. */
+export async function hasRelatedPwaInstalled(): Promise<boolean> {
+  if (typeof window === "undefined") return false
+  const nav = navigator as Navigator & {
+    getInstalledRelatedApps?: () => Promise<{ id?: string; platform?: string }[]>
+  }
+  if (typeof nav.getInstalledRelatedApps !== "function") return false
+  try {
+    const apps = await nav.getInstalledRelatedApps()
+    return apps.length > 0
+  } catch {
+    return false
+  }
+}
+
+/** Hide install UI when running as PWA, after install, or related app already on device. */
+export async function shouldHidePwaInstallBanner(): Promise<boolean> {
+  if (isAppInstalled()) return true
+  if (hasMarkedPwaInstalled()) return true
+  if (await hasRelatedPwaInstalled()) {
+    markPwaInstalled()
+    return true
+  }
+  return false
+}
+
+/** Install banner + step-by-step help only on phones (not desktop browsers). */
+export async function shouldShowPwaInstallBanner(): Promise<boolean> {
+  if (typeof window === "undefined") return false
+  if (!isPhoneInstallTarget()) return false
+  if (await shouldHidePwaInstallBanner()) return false
+  return true
 }
 
 /** True when running as an installed PWA (home screen). */

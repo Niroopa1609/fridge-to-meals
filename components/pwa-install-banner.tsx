@@ -8,9 +8,10 @@ import { fixedBannerAboveMobileNav } from "@/lib/fixed-banner-layout"
 import { PwaInstallHelpDialog } from "@/components/pwa-install-help-dialog"
 import {
   getPhoneInstallPlatform,
-  isAppInstalled,
   isBeforeInstallPromptEvent,
   isPhoneInstallTarget,
+  markPwaInstalled,
+  shouldHidePwaInstallBanner,
   type BeforeInstallPromptEvent,
   type PhoneInstallPlatform,
 } from "@/lib/pwa-install"
@@ -22,8 +23,15 @@ export function PwaInstallBanner() {
   const [installing, setInstalling] = useState(false)
 
   useEffect(() => {
-    if (!isPhoneInstallTarget() || isAppInstalled()) return
-    setVisible(true)
+    if (!isPhoneInstallTarget()) return
+
+    let cancelled = false
+
+    void (async () => {
+      if (await shouldHidePwaInstallBanner()) return
+      if (cancelled) return
+      setVisible(true)
+    })()
 
     const onBeforeInstall = (e: Event) => {
       e.preventDefault()
@@ -32,11 +40,15 @@ export function PwaInstallBanner() {
       }
     }
 
-    const onInstalled = () => setVisible(false)
+    const onInstalled = () => {
+      markPwaInstalled()
+      setVisible(false)
+    }
 
     window.addEventListener("beforeinstallprompt", onBeforeInstall)
     window.addEventListener("appinstalled", onInstalled)
     return () => {
+      cancelled = true
       window.removeEventListener("beforeinstallprompt", onBeforeInstall)
       window.removeEventListener("appinstalled", onInstalled)
     }
@@ -59,8 +71,12 @@ export function PwaInstallBanner() {
       setInstalling(true)
       try {
         await installPrompt.prompt()
-        await installPrompt.userChoice
+        const { outcome } = await installPrompt.userChoice
         setInstallPrompt(null)
+        if (outcome === "accepted") {
+          markPwaInstalled()
+          setVisible(false)
+        }
       } catch {
         /* user dismissed native prompt */
       } finally {
