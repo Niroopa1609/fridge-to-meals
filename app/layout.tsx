@@ -9,6 +9,8 @@ import { RecipesStateProvider } from "@/features/recipes/state/recipes-state"
 import { StructuredData } from "@/components/structured-data"
 import { Toaster } from "@/components/ui/sonner"
 import { OnboardingGate } from "@/components/onboarding-gate"
+import { PushNotificationsPrompt } from "@/components/push-notifications-prompt"
+import { PwaInstallBanner } from "@/components/pwa-install-banner"
 import { ServiceWorkerRegister } from "@/components/service-worker-register"
 import {
   SITE_DESCRIPTION,
@@ -122,6 +124,8 @@ export default function RootLayout({
             <PreferencesCacheProvider>
               <RecipesStateProvider>
                 <OnboardingGate />
+                <PwaInstallBanner />
+                <PushNotificationsPrompt />
                 {children}
               </RecipesStateProvider>
             </PreferencesCacheProvider>

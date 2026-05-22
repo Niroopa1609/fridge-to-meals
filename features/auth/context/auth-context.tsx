@@ -51,6 +51,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       nextUser: AuthUser | null,
       nextRememberDevice: boolean
     ) => {
+      accessTokenRef.current = nextAccessToken
+      refreshTokenRef.current = nextRefreshToken
       setAccessToken(nextAccessToken)
       setRefreshToken(nextRefreshToken)
       setUser(nextUser)
@@ -78,6 +80,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const stored = readAuthSession()
     if (stored) {
+      accessTokenRef.current = stored.session.accessToken
+      refreshTokenRef.current = stored.session.refreshToken
       setAccessToken(stored.session.accessToken)
       setRefreshToken(stored.session.refreshToken)
       setUser(stored.session.user)

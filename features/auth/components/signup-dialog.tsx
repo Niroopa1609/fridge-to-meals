@@ -7,7 +7,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from "@/components/ui/input"
 import { PasswordInput } from "@/components/ui/password-input"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { useAuth } from "@/features/auth/context/auth-context"
+import { isPushSupported, subscribeToPushNotifications } from "@/lib/push-client"
 
 function isValidEmail(value: string) {
   const t = value.trim()
@@ -30,12 +32,30 @@ export function SignUpDialog({
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [enableTodaysPickNotifications, setEnableTodaysPickNotifications] = useState(true)
+  const pushAvailable = isPushSupported()
+
   const submit = async () => {
     setError(null)
     setIsLoading(true)
     try {
       await signUp({ name, email, password })
-      toast.success("Welcome to Fridge To Meals! Your account is ready.")
+
+      if (enableTodaysPickNotifications && pushAvailable) {
+        const pushResult = await subscribeToPushNotifications()
+        if (pushResult.ok) {
+          toast.success("Today's-Pick notifications enabled.", {
+            description: "You'll get a daily alert around 5 AM Eastern with your meal ideas.",
+          })
+        } else {
+          toast.message("Account created", {
+            description: pushResult.reason,
+          })
+        }
+      } else {
+        toast.success("Welcome to Fridge To Meals! Your account is ready.")
+      }
+
       onOpenChange(false)
       onSuccess?.()
       setPassword("")
@@ -115,6 +135,23 @@ export function SignUpDialog({
               </li>
             </ul>
           </div>
+
+          {pushAvailable ? (
+            <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-[#E2D9CC] bg-[#FBF8F2] px-3 py-3">
+              <Checkbox
+                checked={enableTodaysPickNotifications}
+                onCheckedChange={(v) => setEnableTodaysPickNotifications(v === true)}
+                disabled={isLoading}
+                className="mt-0.5 border-[#E2D9CC] data-[state=checked]:border-[#F97316] data-[state=checked]:bg-[#F97316]"
+              />
+              <span className="text-sm leading-snug text-[#1F3A2B]">
+                <span className="font-medium">Enable Today&apos;s-Pick notifications</span>
+                <span className="mt-1 block text-[#1F3A2B]/60">
+                  Every morning alert with Breakfast, Lunch, and Dinner ideas from your fridge.
+                </span>
+              </span>
+            </label>
+          ) : null}
 
           {error && (
             <div className="rounded-lg border border-[#F97316]/30 bg-[#FDE9DD] px-3 py-2 text-sm text-[#EA6A12]">

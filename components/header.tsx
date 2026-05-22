@@ -4,10 +4,13 @@ import { useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { Settings } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/features/auth/context/auth-context"
+import type { AuthUser } from "@/features/auth/types"
 import { SignInDialog } from "@/features/auth/components/signin-dialog"
 import { SignUpDialog } from "@/features/auth/components/signup-dialog"
+import { UserSettingsDialog } from "@/components/user-settings-dialog"
 import { cn } from "@/lib/utils"
 
 /** “To” uses brand orange (image 2). On green header bars, Fridge + Meals stay white like before for contrast; use tone onLight + #1F3A2B on a cream/white strip if needed later. */
@@ -103,6 +106,64 @@ function toTitleCaseName(name: string) {
     .join(" ")
 }
 
+function SignedInHeaderActions({
+  user,
+  onLogout,
+  nameClassName,
+  settingsButtonClassName,
+  logoutButtonClassName,
+  layout = "row",
+}: {
+  user: AuthUser
+  onLogout: () => void | Promise<void>
+  nameClassName?: string
+  settingsButtonClassName?: string
+  logoutButtonClassName?: string
+  layout?: "row" | "column"
+}) {
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const displayName = toTitleCaseName(user.name)
+
+  return (
+    <>
+      <div
+        className={cn(
+          layout === "column" ? "flex flex-col items-center" : "flex flex-wrap items-center justify-end gap-1.5 sm:gap-2"
+        )}
+      >
+        <div className="flex items-center gap-1.5">
+          <p className={cn("font-semibold leading-tight text-white/95", nameClassName)}>
+            Hi {displayName}
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className={settingsButtonClassName}
+            onClick={() => setSettingsOpen(true)}
+            aria-label="Open settings"
+          >
+            <Settings className="h-3.5 w-3.5 sm:h-4 sm:w-4" aria-hidden />
+          </Button>
+        </div>
+        <Button
+          variant="outline"
+          className={logoutButtonClassName}
+          onClick={() => void onLogout()}
+        >
+          Logout
+        </Button>
+      </div>
+      <UserSettingsDialog
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        userId={user.id}
+        userName={displayName}
+      />
+    </>
+  )
+}
+
 export type HeaderVariant = "default" | "recipe"
 
 export function Header({ variant = "default" }: { variant?: HeaderVariant }) {
@@ -163,21 +224,17 @@ export function Header({ variant = "default" }: { variant?: HeaderVariant }) {
 
             <div className="flex shrink-0 flex-col items-end justify-center gap-1 sm:flex-row sm:items-center sm:gap-2 md:gap-3">
               {isHydrated && user ? (
-                <>
-                  <span className="max-w-[5.5rem] truncate text-right text-[10px] font-medium leading-tight text-white/95 sm:max-w-none sm:text-base">
-                    Hi {toTitleCaseName(user.name)} <span aria-hidden>👋</span>
-                  </span>
-                  <Button
-                    variant="outline"
-                    className="h-7 shrink-0 rounded-full border border-white/70 bg-transparent px-2.5 text-[10px] font-semibold leading-none text-white hover:bg-white/10 sm:h-10 sm:px-5 sm:text-sm"
-                    onClick={async () => {
-                      await logout()
-                      router.push("/")
-                    }}
-                  >
-                    Logout
-                  </Button>
-                </>
+                <SignedInHeaderActions
+                  user={user}
+                  layout="row"
+                  nameClassName="max-w-[5.5rem] truncate text-right text-[10px] sm:max-w-none sm:text-base"
+                  settingsButtonClassName="h-7 shrink-0 rounded-full border border-white/70 bg-transparent px-2 text-[10px] font-semibold text-white hover:bg-white/10 sm:h-9 sm:px-3 sm:text-xs"
+                  logoutButtonClassName="h-7 shrink-0 rounded-full border border-white/70 bg-transparent px-2.5 text-[10px] font-semibold leading-none text-white hover:bg-white/10 sm:h-10 sm:px-5 sm:text-sm"
+                  onLogout={async () => {
+                    await logout()
+                    router.push("/")
+                  }}
+                />
               ) : (
                 <div className="flex flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-2">
                   <Button
@@ -227,21 +284,17 @@ export function Header({ variant = "default" }: { variant?: HeaderVariant }) {
           <div className="flex min-w-0 justify-end justify-self-end">
             <div className="flex flex-col items-end justify-center gap-1 md:hidden">
               {isHydrated && user ? (
-                <>
-                  <Button
-                    variant="outline"
-                    className="h-7 rounded-md border border-white/60 bg-transparent px-2.5 text-xs font-medium text-white hover:bg-white/10"
-                    onClick={async () => {
-                      await logout()
-                      router.push("/")
-                    }}
-                  >
-                    Logout
-                  </Button>
-                  <p className="w-full max-w-[7rem] truncate text-center text-[10px] font-semibold leading-tight text-white/95 sm:max-w-[9rem] sm:text-xs">
-                    Hi {toTitleCaseName(user.name)}
-                  </p>
-                </>
+                <SignedInHeaderActions
+                  user={user}
+                  layout="column"
+                  nameClassName="w-full max-w-[9rem] truncate text-center text-[10px] sm:text-xs"
+                  settingsButtonClassName="h-7 rounded-md border border-white/60 bg-transparent px-2 text-[10px] font-medium text-white hover:bg-white/10"
+                  logoutButtonClassName="h-7 rounded-md border border-white/60 bg-transparent px-2.5 text-xs font-medium text-white hover:bg-white/10"
+                  onLogout={async () => {
+                    await logout()
+                    router.push("/")
+                  }}
+                />
               ) : (
                 <>
                   <Button
@@ -263,21 +316,17 @@ export function Header({ variant = "default" }: { variant?: HeaderVariant }) {
 
             <div className="hidden items-center gap-3 md:flex">
               {isHydrated && user ? (
-                <div className="flex flex-col items-center">
-                  <Button
-                    variant="outline"
-                    className="h-9 rounded-md border border-white/60 bg-transparent px-5 text-sm font-medium text-white hover:bg-white/10 md:h-10"
-                    onClick={async () => {
-                      await logout()
-                      router.push("/")
-                    }}
-                  >
-                    Logout
-                  </Button>
-                  <p className="mt-1 font-serif text-[15px] font-semibold tracking-wide text-white/95">
-                    Hi {toTitleCaseName(user.name)}
-                  </p>
-                </div>
+                <SignedInHeaderActions
+                  user={user}
+                  layout="column"
+                  nameClassName="mt-1 font-serif text-[15px] tracking-wide"
+                  settingsButtonClassName="h-8 rounded-md border border-white/60 bg-transparent px-3 text-xs font-medium text-white hover:bg-white/10"
+                  logoutButtonClassName="h-9 rounded-md border border-white/60 bg-transparent px-5 text-sm font-medium text-white hover:bg-white/10 md:h-10"
+                  onLogout={async () => {
+                    await logout()
+                    router.push("/")
+                  }}
+                />
               ) : (
                 <>
                   <Button

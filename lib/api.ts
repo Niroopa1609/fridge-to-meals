@@ -1,3 +1,4 @@
+import { isAbortError } from "@/lib/abort"
 import { getRequestId } from "@/lib/request-id"
 import { logError, logInfo } from "@/lib/logger"
 import { getClientAccessToken, tryRefreshSession } from "@/lib/auth-session-client"
@@ -88,7 +89,12 @@ export async function apiFetch(path: string, options: ApiFetchOptions = {}) {
       (errMessage === "Failed to fetch" ||
         errMessage.includes("NetworkError") ||
         errMessage.includes("Load failed"))
-    if (isTransientNetwork) {
+    if (isAbortError(e)) {
+      logInfo("api.request.aborted", requestId, {
+        method: options.method ?? "GET",
+        path,
+      })
+    } else if (isTransientNetwork) {
       logInfo("api.request.network_error", requestId, {
         method: options.method ?? "GET",
         path,

@@ -1,3 +1,5 @@
+import { readAuthSession } from "@/features/auth/auth-storage"
+
 type AuthSessionClient = {
   getAccessToken: () => string | null
   refresh: () => Promise<boolean>
@@ -10,8 +12,12 @@ export function registerAuthSessionClient(next: AuthSessionClient | null) {
   client = next
 }
 
+/** Token from in-memory ref (synced on login) or storage fallback right after sign-up. */
 export function getClientAccessToken(): string | null {
-  return client?.getAccessToken() ?? null
+  const fromRef = client?.getAccessToken() ?? null
+  if (fromRef) return fromRef
+  if (typeof window === "undefined") return null
+  return readAuthSession()?.session.accessToken ?? null
 }
 
 export async function tryRefreshSession(): Promise<boolean> {
