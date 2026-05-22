@@ -130,7 +130,7 @@ export function TodaysPickNotificationsToggle({ userId, className }: Props) {
           {hint}
         </p>
       ) : null}
-      <p className="text-xs text-[#1F3A2B]/45">{TODAYS_PICK_NOTIFICATIONS_COPY.optionalNote}</p>
+      
     </div>
   )
 }

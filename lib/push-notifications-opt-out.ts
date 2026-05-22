@@ -25,11 +25,10 @@ export const TODAYS_PICK_NOTIFICATIONS_COPY = {
   disabledLabel: "Disabled",
   blockedLabel: "Blocked",
   enabledToast: "Today's-Pick notifications enabled.",
-  enabledToastDetail: "You'll get a daily alert Eastern with your meal ideas.",
+  enabledToastDetail: "You'll get a daily alert with your meal ideas.",
   disabledToast: "Today's-Pick notifications turned off.",
   blockedHint:
     "Notifications are blocked in your browser. Allow notifications in browser settings, then turn this on again.",
   unsupportedHint: "Not supported in this browser.",
   notConfiguredHint: "Not available on this server right now.",
-  
-} as const
+  } as const
